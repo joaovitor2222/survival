@@ -429,7 +429,7 @@ function createRewardButton() {
 }
 
 const btnParrotToggleFollow = document.getElementById('btnParrotToggleFollow');
-
+  
 function showRewardButton() {
   const pending = Number(sessionStorage.getItem('pendingSeeds')) || 0;
   const btn = document.getElementById('btnReward');
@@ -1719,6 +1719,7 @@ window.addEventListener('keydown', e=>{
 
 
 // --- Botões ---
+const btnAttack = document.getElementById('btnAttack');
 document.getElementById('btnAttack').onclick = attack;
 document.getElementById('btnCraft').onclick = ()=>{
   document.getElementById('craftPanel').style.display = 
@@ -1750,6 +1751,13 @@ document.getElementById('craftAxe').addEventListener('click', () => {
   }
 });
 
+// disparar no clique normal (desktop)…
+btnAttack.addEventListener('click', attack);
+// …e também no toque (mobile)
+btnAttack.addEventListener('touchstart', e => {
+  e.preventDefault();  // opcional, evita geração dupla de eventos
+  attack();
+});
 
 document.getElementById('craftSword').onclick = () => {
   let wood = getItem('wood')?.count || 0;
