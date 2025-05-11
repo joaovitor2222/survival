@@ -138,6 +138,22 @@
     font-size: 12px;
   }
 
+  /* Remove o contorno azul ao tocar/focar em botões */
+button,
+#btnAttack,
+#btnCraft,
+#btnUpgradePack,
+#craftAxe,
+#craftSword,
+#craftFiber,
+#craftRope {
+  outline: none;
+  -webkit-tap-highlight-color: transparent; /* Chrome/Safari no iOS/Android */
+  -moz-tap-highlight-color: transparent;    /* Firefox Android */
+  touch-action: manipulation;               /* evita double-tap em alguns browsers */
+}
+
+
   /* Ajusta status bars para telas pequenas */
   #statusBars .bar {
     width: 150px;
@@ -1533,6 +1549,18 @@ document.getElementById('craftPlant').onclick = () => {
 };
 
 let activePlant = null;
+
+function goFullScreen() {
+  const el = document.documentElement;
+  if (el.requestFullscreen)       el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();      // Safari
+  else if (el.msRequestFullscreen)     el.msRequestFullscreen();          // IE11
+}
+
+document.getElementById('startGameBtn').addEventListener('click', () => {
+  goFullScreen();
+  // …iniciar lógica do jogo…
+});
 
 
 btnOpenPlant.onclick = () => {
