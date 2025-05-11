@@ -167,6 +167,7 @@ button,
 <body>
 <canvas id="game"></canvas>
 <div id="hud"></div>
+<button id="startGameBtn" style="position:fixed; bottom:10px; left:10px; z-index:1000;">Tela Cheia</button>
 <button id="btnAttack">Atacar (J)</button>
 <button id="btnConsume">Consumir</button>
 <button id="btnCraft">Craft</button>
@@ -1550,16 +1551,40 @@ document.getElementById('craftPlant').onclick = () => {
 
 let activePlant = null;
 
-function goFullScreen() {
-  const el = document.documentElement;
-  if (el.requestFullscreen)       el.requestFullscreen();
-  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();      // Safari
-  else if (el.msRequestFullscreen)     el.msRequestFullscreen();          // IE11
+function toggleFullScreen() {
+  const btn = document.getElementById('startGameBtn');
+
+  if (
+    !document.fullscreenElement &&
+    !document.webkitFullscreenElement &&
+    !document.mozFullScreenElement &&
+    !document.msFullscreenElement
+  ) {
+    const el = document.documentElement;
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.msRequestFullscreen) el.msRequestFullscreen();
+    btn.textContent = 'Sair da Tela Cheia';
+  } else {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    else if (document.msExitFullscreen) document.msExitFullscreen();
+    btn.textContent = 'Tela Cheia';
+  }
 }
 
+// Garante que o texto muda mesmo se fullscreen for alterado fora do botão
+document.addEventListener('fullscreenchange', () => {
+  const btn = document.getElementById('startGameBtn');
+  if (document.fullscreenElement) {
+    btn.textContent = 'Sair da Tela Cheia';
+  } else {
+    btn.textContent = 'Tela Cheia';
+  }
+});
+
 document.getElementById('startGameBtn').addEventListener('click', () => {
-  goFullScreen();
-  // …iniciar lógica do jogo…
+  toggleFullScreen();
 });
 
 
