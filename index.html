@@ -185,6 +185,7 @@ button,
 <button id="plantSeed">Plantar Semente</button>
 <button id="craftRaft">Construir Jangada (198 🌲, 20 🪨, 50 🪢, 40 🪶)</button>
 <button id="craftPotion">Poção Mágica (5 folhas, 16 frutas, 8 cocos)</button>
+<button id="craftZoomPotion">Poção de Zoom (10 folhas, 5 fibras)</button>
 <div class="armaduras" style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;"></div>
 <button id="craftWoodArmor">Armadura de Madeira (4 🍃, 20 🪵)</button>
 
@@ -297,6 +298,8 @@ button,
   <button class="modAdd" data-type="seeds">Add Semente</button><br>
   <button class="modAdd" data-type="potion">Add Poção</button><br>
   <button class="modAdd" data-type="sickle">Add Foice</button><br>
+  <button class="modAdd" data-type="zoomPotion">Add Poção de Zoom</button><br>
+
 
 
   <!-- adicione mais botões aqui conforme novos tipos -->
@@ -512,6 +515,11 @@ window.addEventListener('DOMContentLoaded', () => {
     alert('🎁 Bônus: Você ganhou 3 cocos grátis por jogar em tela pequena!');
   }
 
+    if (sessionStorage.getItem('avisado') !== 'true') {
+    alert('🛶 Para vencer o jogo, crafite o raft!');
+    sessionStorage.setItem('avisado', 'true');
+  }
+
     spawnMagicParrot();
 
   const stick = document.getElementById('stick');
@@ -549,6 +557,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 const lions = [];
 let lastDamageTime = Date.now();
+let zoomFactor = 1;
 const baseReach = 60;
 let reachMultiplier = 1;   // o buff vai setar para 2
 let reach = baseReach;
@@ -594,6 +603,8 @@ loadImg('woodArmor', 'https://www.medievalware.com/wp-content/uploads/2021/04/vi
 loadImg('sickle', 'https://bokkein-rpg.weebly.com/uploads/1/3/8/2/13826656/__1426893414.png');
 loadImg('plant', 'https://img.freepik.com/premium-vector/pixel-art-factory-building-with-smoke-from-chimneys_1292377-12397.jpg');
 loadImg('magicparrot','https://png.pngtree.com/png-clipart/20240819/original/pngtree-parrot-face-png-image_15805579.png');
+loadImg('zoomPotion', 'https://static.vecteezy.com/system/resources/thumbnails/059/140/810/small_2x/wonderful-artistic-a-single-potion-bottle-bubbling-green-liquid-cork-stopper-high-quality-png.png');
+
 const progContainer = document.getElementById('plantProgressContainer');
 const progFill      = document.getElementById('plantProgressFill');
 
@@ -796,7 +807,7 @@ function updateHUD(){
   }
   updateToolHUD();
   const sel = player.inventory[player.selected];
-  btnConsume.disabled = !(sel && (sel.type==='fruit' || sel.type==='coconut' || sel.type === 'potion'));
+  btnConsume.disabled = !(sel && (sel.type==='fruit' || sel.type==='coconut' || sel.type === 'potion' || sel.type === 'zoomPotion'));
 }
 updateHUD();
 
@@ -870,6 +881,16 @@ document.getElementById('btnVideo').onclick   = () => {
   }
 };
 
+document.getElementById('craftZoomPotion').onclick = () => {
+  if (totalCount('leaf') >= 10 && totalCount('fiber') >= 5) {
+    removeItem('leaf', 10);
+    removeItem('fiber', 5);
+    giveItem('zoomPotion', 1);
+    alert('Poção de Zoom criada!');
+  } else {
+    alert('Recursos insuficientes!');
+  }
+};
 
 // Plantar seed
 document.getElementById('plantSeed').onclick = () => {
@@ -1003,8 +1024,8 @@ document.querySelectorAll('.modAdd').forEach(btn => {
     player.tool    = type;
     player.toolDur = (type === 'axe' ? 20 : (type === 'sword' ? 35 : 20));
     }
-    else if (type === 'potion') {
-      giveItem('potion', 1);
+    else if (type === 'potion' || type === 'zoomPotion') {
+      giveItem(type, 1); // dá só 1
     }
 
      else {
@@ -1245,7 +1266,7 @@ function generateParrotReward() {
     // Muito raro: usina
     parrotReward = { type: 'plant', qty: 1 };
   } else if (r < 20) {
-    // Raro: 50% chance entre semente e poção
+    // Raro: 50% chance entre semente e poção normal
     if (Math.random() < 0.5) {
       const seeds = randInt(1, 3);
       parrotReward = { type: 'seeds', qty: seeds };
@@ -1253,12 +1274,19 @@ function generateParrotReward() {
       parrotReward = { type: 'potion', qty: 1 };
     }
   } else {
-    // Comum
-    const commons = ['leaf', 'fiber', 'fruit'];
-    const type = commons[randInt(0, 2)];
-    let qty = (type === 'leaf' ? randInt(5, 10)
-              : type === 'fiber' ? randInt(4, 5)
-              : randInt(8, 14));
+    // Comum — agora inclui também zoomPotion
+    const commons = ['leaf', 'fiber', 'fruit', 'zoomPotion'];
+    const type    = commons[randInt(0, commons.length - 1)];
+    let qty;
+    if (type === 'leaf') {
+      qty = randInt(5, 10);
+    } else if (type === 'fiber') {
+      qty = randInt(4, 5);
+    } else if (type === 'fruit') {
+      qty = randInt(8, 14);
+    } else { // zoomPotion
+      qty = 1;
+    }
     parrotReward = { type, qty };
   }
 
@@ -1268,20 +1296,35 @@ function generateParrotReward() {
   alert('Papagaio tem algo para você! Aproxe-se e interaja.');
 }
 
+
 // 9) Interação e entrega
-document.getElementById('btnParrotInteract').onclick = ()=>{
+document.getElementById('btnParrotInteract').onclick = () => {
   if (!parrotReward) return;
   const { type, qty } = parrotReward;
-  if (type==='plant') {
-    // constrói usina de graça
-    document.getElementById('craftPlant').click();
+
+  if (type === 'plant') {
+    // constrói a usina GRATUITAMENTE, sem checar recursos:
+    const plant = {
+      ...PLANT,
+      x: player.x,
+      y: player.y,
+      uid: Date.now(),
+      upgraded: false,
+      slots: { fuel: null, craftIn: null, output: null },
+      timers: { fuelRemaining: 0, craftTimer: 0 }
+    };
+    objects.push(plant);
+    alert('🎉 Você recebeu e construiu uma Usina grátis!');
   } else {
     giveItem(type, qty);
+    alert(`Você recebeu ${qty}× ${type}!`);
   }
-  alert(`Você recebeu ${qty}× ${type}!`);
+
   parrotReward = null;
-  document.getElementById('btnParrotInteract').style.display='none';
+  document.getElementById('btnParrotInteract').style.display = 'none';
+  updateHUD();
 };
+
 
 function mergeChestStacks() {
   if (!activeChest) return;
@@ -1830,6 +1873,13 @@ document.getElementById('craftSword').onclick = () => {
 
 
 document.getElementById('craftPack').onclick = () => {
+  // 1) Se já tiver mochila, bloqueia tudo e não consome nada:
+  if (player.backpackLevel >= 0) {
+    alert('Você já possui uma mochila!');
+    return;
+  }
+
+  // 2) Só aqui embaixo verificamos recursos e consumimos:
   const ropes = getItem('rope')?.count || 0;
   const wood  = getItem('wood')?.count || 0;
 
@@ -1838,23 +1888,18 @@ document.getElementById('craftPack').onclick = () => {
     removeItem('rope', 20);
     removeItem('wood', 10);
 
-    // primeira vez criando mochila
-    if (player.backpackLevel < 0) {
-      player.backpackLevel = 0;
-      // Defina INV SIZE para o nível 0 (aqui coloque 6, ou 2 se for esse seu design)
-      player.invSize = 6;
+    // cria a mochila pela primeira vez
+    player.backpackLevel = 0;
+    player.invSize       = 6;      // nível 0 = 6 slots
+    ensureInventorySize();         // ajusta o array inventory
+    updateHUD();                   // redesenha o HUD
 
-      // Garante que o array player.inventory tenha exatamente invSize posições
-      ensureInventorySize();
-      // Atualiza o HUD para desenhar os novos slots
-      updateHUD();
-
-      alert(`Mochila criada! Você tem ${player.invSize} slots agora.`);
-    }
+    alert(`Mochila criada! Você tem ${player.invSize} slots agora.`);
   } else {
     alert('Recursos insuficientes para criar a mochila.');
   }
 };
+
 
 
 document.getElementById('craftFiber').onclick = () => {
@@ -2213,6 +2258,12 @@ if (player.tool === 'axe' || player.tool === 'sword' || player.tool === 'sickle'
 
 
       if (l.hp <= 0) {
+
+        if (Math.random() < 0.4) {
+          giveItem('zoomPotion', 1);
+        alert('🍃 Você encontrou uma Poção de Zoom!');
+        }
+
         lions.splice(i, 1);
         console.log('💀 Leão morreu!');
       }
@@ -2418,6 +2469,22 @@ function startPotionCooldown() {
   }, 1000);
 }
 
+function consumeZoomPotion() {
+  if (potionCooldown) { alert('Ainda em cooldown!'); return; }
+
+  // 4× de zoom out:
+  zoomFactor = 0.25;
+
+  // dura, por exemplo, 60 s:
+  setTimeout(() => {
+    zoomFactor = 1;  // volta ao normal
+  }, 60 * 1000);
+
+  // aqui você também aciona o cooldown, decrementa o item do inventário etc.
+}
+
+
+
 function getItem(type) {
   return player.inventory.find(i => i && i.type === type) || null;
 }
@@ -2511,9 +2578,15 @@ function draw() {
   updateToolHUD();
   ctx.clearRect(0, 0, W, H);
 
+
+
   // —————— Transformação de mundo ——————
   ctx.save();
-  ctx.translate(W / 2 - player.x, H / 2 - player.y);
+      // 1) Aplica escala (zoom out = valor < 1, zoom in = > 1)
+  ctx.scale(zoomFactor, zoomFactor);
+
+    ctx.translate(W / 2 / zoomFactor - player.x, H / 2 / zoomFactor - player.y);
+
 
   // 1) Atualiza comportamento dos leões (antes de desenhá‑los)
   if (!isDay) {
@@ -2756,6 +2829,7 @@ plantsToProcess.forEach(P => {
   // 8) Desenha indicador dia/noite no topo
 // 8) Desenha indicador dia/noite no topo, centralizado
 ctx.save();
+
 ctx.beginPath();
 const circleX = W / 2;  // centro horizontal
 const circleY = 50;     // 50px do topo
@@ -2833,7 +2907,14 @@ function consume(){
   applyPotionBuff();
   // 3) Consome a poção
   it.count--;
-  } else return; // não comestível
+  }
+    else if (it.type === 'zoomPotion') {
+    // aplica o efeito de zoom
+    player.thirst = Math.min(100, player.thirst + 40);
+    consumeZoomPotion();      // você deve ter implementado essa função
+    it.count--;
+  }
+   else return; // não comestível
   if(it.count<=0) player.inventory.splice(player.selected,1);
   updateBars(); updateHUD();
 }
