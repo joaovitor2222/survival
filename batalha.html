@@ -1,0 +1,1774 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Minigame Batalha</title>
+    <style>
+        /* tela cheia, sem margens */
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        /* canvas ocupa toda a janela */
+
+        #gameCanvas {
+            display: block;
+            background: #654321;
+            /* marrom escuro para a ilha */
+            cursor: grab;
+        }
+
+        /* menu de dificuldade centralizado */
+
+        #menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-family: sans-serif;
+        }
+
+        #menu button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* Painel inferior de seleção */
+
+        #troopPanel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            padding: 8px;
+            justify-content: center;
+        }
+
+        .troop-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 8px;
+            cursor: pointer;
+            color: white;
+            font-family: sans-serif;
+        }
+
+        .troop-btn img {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 4px;
+        }
+
+        .troop-btn.selected {
+            outline: 2px solid #ffd700;
+            border-radius: 4px;
+        }
+
+        /* Barra de vida */
+
+        .hp-bar {
+            position: absolute;
+            height: 6px;
+            background: gray;
+        }
+
+        .hp-fill {
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- canvas do jogo -->
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <button id="btnToggleShop"
+        style="position: absolute; top: 50%; right: 0; transform: translateY(-50%);padding: 10px; font-size: 16px; z-index: 1000;">
+        Loja
+    </button>
+
+
+    <!-- menu de seleção de dificuldade -->
+    <div id="menu">
+        <h2>Escolha a Dificuldade</h2>
+        <button data-diff="easy">Fácil</button>
+        <button data-diff="medium">Médio</button>
+        <button data-diff="hard">Hard</button>
+    </div>
+
+    <div id="troopPanel">
+        <!-- Os botões serão gerados via JS -->
+        <button id="btnCancel" style="margin-left: 16px">Cancelar Compra</button>
+    </div>
+
+    <div id="shop"
+        style="position: absolute;top: 50%; left: 50%;transform: translate(-50%, -50%);background: rgba(0, 0, 0, 0.7);padding: 10px;color: #fff;font-family: sans-serif;display: none;z-index: 999;">
+        <h3>Loja</h3>
+        <div id="upgrades"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Tamanho do mundo
+        const WORLD_SIZE = 2600;
+
+        // Posições dos castelos
+        const castles = {
+            green: {
+                x: WORLD_SIZE - 100,
+                y: WORLD_SIZE / 2,
+                hp: 3000,
+                maxHp: 3000,
+            },
+            red: {
+                x: 100,
+                y: WORLD_SIZE / 2,
+                hp: 3000,
+                maxHp: 3000,
+            },
+        };
+
+        // Estado da câmera
+        const camera = {
+            x: 0,
+            y: 0,
+            dragging: false,
+            lastX: 0,
+            lastY: 0,
+        };
+
+        let hardMode = false;
+
+        // Para controlar regeneração
+        castles.red.lastHitTime = 0;
+
+
+        /**
+         * Explode em (x,y) numa área quadrada de size×size,
+         * causando `dmg` a todas as tropas de `targets`.
+         * Se alguma morrer, recompensa normalmente.
+         */
+        function explodeAt(x, y, size, dmg, targets) {
+            const half = size / 2;
+            targets.forEach((t, i) => {
+                if (t.x >= x - half && t.x <= x + half && t.y >= y - half && t.y <= y + half) {
+                    const killed = applyDamage(t, dmg);
+                    // se morreu, já fizemos applyDamage e removemos da lista lá,
+                    // então recompensa normal de kill (já está na lógica de applyDamage).
+                }
+            });
+
+            // Se o castelo inimigo estiver na área, também toma dano:
+            [castles.green, castles.red].forEach((c) => {
+                if (
+                    c.hp > 0 &&
+                    c.x >= x - half &&
+                    c.x <= x + half &&
+                    c.y >= y - half &&
+                    c.y <= y + half
+                ) {
+                    c.hp = Math.max(0, c.hp - dmg);
+                    checkEndConditions();
+                }
+            });
+        }
+
+
+        function applyDamage(unit, dmg) {
+            const wasAlive = unit.hp > 0;
+            unit.hp = Math.max(0, unit.hp - dmg);
+            const died = wasAlive && unit.hp === 0;
+            if (died) {
+                // Explosão caso fosse um golem inimigo
+                if (unit.type === "golem") {
+                    explodeAt(unit.x, unit.y, 90, 100, unit === castles.green ? enemies : allies);
+                }
+
+                // Remove da lista
+                const idxA = allies.indexOf(unit);
+                if (idxA !== -1) {
+                    allies.splice(idxA, 1);
+                    return true;
+                }
+                const idxE = enemies.indexOf(unit);
+                if (idxE !== -1) {
+                    enemies.splice(idxE, 1);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        let hardModeFlags = {
+            spawnedAt50: false,
+            spawnedAt20: false
+        };
+
+        function checkHardModeTriggers() {
+            const castle = castles.red;
+            const pct = castle.hp / castle.maxHp;
+
+            // ≤ 50% de vida — uma vez
+            if (hardMode && !hardModeFlags.spawnedAt50 && pct <= 0.5) {
+                hardModeFlags.spawnedAt50 = true;
+                // gera 1 espadachim
+                spawnEnemyInstant("espadachim");
+                // gera 1 curadora evoluída
+                spawnEnemyInstant("curador", { evolved: true });
+            }
+
+            // ≤ 20% de vida — uma vez
+            if (hardMode && !hardModeFlags.spawnedAt20 && pct <= 0.2) {
+                hardModeFlags.spawnedAt20 = true;
+                // gera 1 golem
+                spawnEnemyInstant("golem");
+                // gera 1 mago
+                spawnEnemyInstant("mago");
+            }
+        }
+
+
+
+        // Preload das imagens
+        const castleImg = new Image();
+        castleImg.src =
+            "https://cdn.pixabay.com/photo/2022/09/08/11/36/castle-7440761_1280.png";
+        castleImg.onload = () => {
+            castles.green.img = castleImg;
+            castles.red.img = castleImg;
+            draw();
+        };
+
+        // --- Troop definitions ---
+        const troopDefs = {
+            arqueiro: {
+                name: "Arqueiro",
+                cost: 80,
+                hp: 250,
+                maxHp: 250,
+                range: 410,
+                damage: 110,
+                attackSpeed: 4500,
+                speed: 60, // pixels por segundo
+                imgSrc: "https://images.vexels.com/media/users/3/249193/isolated/preview/6594b2dcb1518684a963eda9cc61b6e8-personagens-de-chibi-de-tiro-com-arco-7.png",
+            },
+            espadachim: {
+                name: "Espadachim",
+                cost: 50,
+                hp: 1200,
+                maxHp: 1200,
+                range: 15,
+                damage: 80,
+                attackSpeed: 1000,
+                speed: 120, // mais rápido, estilo melee
+                imgSrc: "https://img.freepik.com/fotos-premium/samurai-ronin-com-armadura-tradicional-e-katana-homem-teen-ta-cute-guerreiro-ilustracao-de-personagem_1020495-735514.jpg",
+            },
+            curador: {
+                name: "Curador",
+                cost: 120,
+                hp: 300,
+                maxHp: 300,
+                range: 250,
+                damage: 25,
+                heal: 150,
+                attackSpeed: 1000,
+                speed: 50, // mais lento
+                imgSrc: "https://cdn.pixabay.com/photo/2024/05/28/09/11/woman-8793320_1280.png",
+            },
+            mago: {
+                name: "Mago",
+                cost: 110,
+                hp: 150,
+                maxHp: 150,
+                range: 300,
+                damage: 300,
+                attackSpeed: 3000,
+                speed: 80, // moderado
+                imgSrc: "https://static.vecteezy.com/system/resources/previews/055/136/141/non_2x/chibi-wizard-casting-spells-in-enchanted-forest-digital-art-fantasy-whimsical-viewpoint-free-png.png",
+            },
+            assassino: {
+                name: "Assassino",
+                cost: 150,
+                hp: 400,
+                maxHp: 400,
+                range: 15,
+                damage: 80,
+                attackSpeed: 1000,
+                speed: 150, // rápido
+                imgSrc: "https://images.vexels.com/media/users/3/266496/isolated/preview/f87a7beb11d5fdda3c8fc39990d0823b-ceifador-kawaii-de-halloween.png",
+            },
+            golem: {
+                name: "Golem",
+                cost: 230,
+                hp: 2100,
+                maxHp: 2100,
+                range: 30, // corpo-a-corpo até 30px
+                damage: 200,
+                attackSpeed: 1500, // tempo entre ataques (ajuste a gosto)
+                speed: 25,
+                imgSrc: "https://www.pngplay.com/wp-content/uploads/11/Golem-Pokemon-PNG-Clipart-Background.png"
+            },
+        };
+
+        // slots onde o jogador pode construir torres
+        const towerSlots = [
+            // Slots do castelo verde (alinhados na horizontal à esquerda)
+            { x: castles.green.x - 80, y: castles.green.y, w: 60, h: 60, occupied: null },
+            { x: castles.green.x - 150, y: castles.green.y, w: 60, h: 60, occupied: null },
+            { x: castles.green.x - 220, y: castles.green.y, w: 60, h: 60, occupied: null },
+
+            // Slots do castelo vermelho (à direita do castelo inimigo)
+            { x: castles.red.x + 80, y: castles.red.y, w: 60, h: 60, occupied: null },
+            { x: castles.red.x + 150, y: castles.red.y, w: 60, h: 60, occupied: null },
+            { x: castles.red.x + 220, y: castles.red.y, w: 60, h: 60, occupied: null },
+        ];
+
+        const imgTower = new Image();
+        imgTower.src = "https://fiverr-res.cloudinary.com/images/t_smartwm/t_main1,q_auto,f_auto,q_auto,f_auto/v1/attachments/delivery/asset/b8ae8764ed4afe6f2b136bd893aaac5e-1744895032/lordpickle%20tower%20large/create-pixel-art-assests-of-your-choice.png";
+        const imgHealTower = new Image();
+        imgHealTower.src = "https://static.vecteezy.com/system/resources/previews/018/873/070/non_2x/crystal-curative-transparent-healing-quartz-blue-gradient-clear-bright-gem-magic-stone-png.png";
+        const imgMine = new Image();
+        imgMine.src = "https://images.vexels.com/media/users/3/314781/isolated/preview/ba64a07decf002fb3523e884d272711d-mining-for-gold.png";
+        const imgSpawnTower = new Image();
+        imgSpawnTower.src = "https://png.pngtree.com/png-clipart/20240705/original/pngtree-pet-house-in-pixel-art-style-png-image_15494000.png";
+
+
+        const towerDefs = {
+            tower_arqueira: {
+                cost: 350,
+                hp: 1600,
+                maxHp: 1600,
+                range: 450,
+                damage: 155,
+                attackSpeed: 4500, // ms
+                img: imgTower
+            },
+            tower_curativa: {
+                cost: 400,
+                hp: 900,
+                maxHp: 900,
+                range: 310,
+                damage: 25,        // dano por ataque (1s)
+                heal: 150,         // cura por ataque (1s)
+                attackSpeed: 1000, // 1 segundo
+                img: imgHealTower
+            },
+            mine: {  // ✅ Aqui você pode adicionar direto como propriedade
+                cost: 500,
+                hp: 600,
+                maxHp: 600,
+                goldPerTick: 100,
+                tickInterval: 8000,
+                img: imgMine
+            },
+            tower_spawner: {
+                cost: 450,
+                hp: 800,
+                maxHp: 800,
+                range: 0,           // não ataca diretamente
+                spawnInterval: 10000,  // 10 s
+                lastSpawn: 0,
+                img: imgSpawnTower
+            }
+        };
+
+        // nível de upgrade para cada tipo e cada stat
+        const upgrades = {
+            arqueiro: {
+                hp: 0,
+                dmg: 0,
+                range: 0,
+                speed: 0
+            },
+            espadachim: {
+                hp: 0,
+                dmg: 0,
+                range: 0,
+                speed: 0
+            },
+            curador: {
+                hp: 0,
+                dmg: 0,
+                range: 0,
+                speed: 0
+            },
+            mago: {
+                hp: 0,
+                dmg: 0,
+                range: 0,
+                speed: 0
+            },
+            assassino: {
+                hp: 0,
+                dmg: 0,
+                range: 0,
+                speed: 0
+            },
+            golem: {
+                hp: 0,
+                dmg: 0,
+                range: 0,
+                speed: 0
+            },
+        };
+
+        // configuração de evolução
+        const evolution = {
+            arqueiro: {
+                cost: 1200,
+                unlocked: JSON.parse(localStorage.getItem("evo_arqueiro")) || false,
+                stats: {
+                    hp: 410,
+                    maxHp: 410,
+                    range: 500,
+                    damage: 180,
+                    speed: 80
+                }
+            },
+            curador: {
+                cost: 800,
+                unlocked: JSON.parse(localStorage.getItem("evo_curador")) || false,
+                stats: {
+                    hp: 580,
+                    maxHp: 580,
+                    range: 350,
+                    damage: 80,
+                    heal: 250,
+                    speed: 70
+                }
+            }
+        };
+
+        // contador de compras em partida
+        const purchaseCount = {
+            arqueiro: 0,
+            curador: 0
+        };
+
+
+        const rewardForKill = {
+            espadachim: 80,
+            arqueiro: 140,
+            curador: 250,
+            mago: 300,
+            assassino: 250,
+            golem: 380,
+            tower_arqueira: 200,
+            tower_curativa: 275,
+        };
+
+        // 2) Carregue a imagem da flecha:
+        const arrowImg = new Image();
+        arrowImg.src =
+            "https://static.vecteezy.com/ti/vetor-gratis/p1/20407177-linha-de-seta-arco-isolada-no-fundo-branco-icone-liso-preto-fino-no-estilo-de-contorno-moderno-simbolo-linear-e-traco-editavel-ilustracaoial-de-traco-perfeito-simples-e-pixel-vetor.jpg";
+
+        const allies = [];
+        const enemies = [];
+
+        // 3) Crie um array para projetis (setas) – vai usar depois:
+        const projectiles = [];
+
+        let lastTime = 0;
+        const waveDuration = 5 * 60 * 1000; // 5 minutos em ms
+
+        document.getElementById("btnCancel").onclick = () => {
+            document
+                .querySelectorAll(".troop-btn")
+                .forEach((b) => b.classList.remove("selected"));
+            selectedType = null;
+        };
+
+        function startGame(diff) {
+            hardMode = (diff === "hard");
+            // marca como "acabou de começar sem hit" para só regençar após 20s
+            castles.red.lastHitTime = performance.now();
+
+            if (hardMode) {
+                enemyBuildTower();
+                // halve todas as recompensas
+                Object.keys(rewardForKill).forEach(type => {
+                    rewardForKill[type] = Math.floor(rewardForKill[type] / 2);
+                });
+            }
+
+            const cfg = {
+                easy: {
+                    max: 20,
+                    delay: 20000,
+                    waveSizes: [5, 8, 15, 20],
+                },
+                medium: {
+                    max: 35,
+                    delay: 10000,
+                    waveSizes: [7, 13, 19, 35],
+                },
+                hard: {
+                    max: 50,
+                    delay: 3000,
+                    waveSizes: [15, 20, 35, 50],
+                },
+            }[diff];
+
+            cfg.waveSizes.forEach((count, i) => {
+                setTimeout(() => spawnWave(count, "enemy"), i * waveDuration);
+            });
+        }
+
+        let money = 200;
+        let selectedType = null;
+
+        // Carrega imagens
+        for (const key in troopDefs) {
+            const img = new Image();
+            img.src = troopDefs[key].imgSrc;
+            troopDefs[key].img = img;
+        }
+
+        // --- Painel de seleção ---
+        const panel = document.getElementById("troopPanel");
+        for (const key in troopDefs) {
+            const td = troopDefs[key];
+            const btn = document.createElement("div");
+            btn.classList.add("troop-btn");
+            btn.innerHTML = `
+      <img src="${td.imgSrc}" title="${td.name}">
+      <div>${td.name}</div>
+      <div>${td.cost} 💰</div>
+    `;
+            btn.onclick = () => {
+                document
+                    .querySelectorAll(".troop-btn")
+                    .forEach((b) => b.classList.remove("selected"));
+                btn.classList.add("selected");
+                selectedType = key;
+            };
+            panel.appendChild(btn);
+        }
+
+        // Clique na tela => spawn allied troop at green castle
+        canvas.addEventListener("click", (e) => {
+            // 1) Converte a posição do clique para coordenadas do mundo (considerando escala e câmera)
+            const rect = canvas.getBoundingClientRect();
+            const mx = (e.clientX - rect.left) / scale + camera.x;
+            const my = (e.clientY - rect.top) / scale + camera.y;
+
+            // 2) Tenta construir torre se clicou num slot livre
+            for (const slot of towerSlots) {
+                if (!slot.occupied &&
+                    mx >= slot.x - slot.w / 2 && mx <= slot.x + slot.w / 2 &&
+                    my >= slot.y - slot.h / 2 && my <= slot.y + slot.h / 2) {
+                    // Apenas slots do lado verde
+                    if (Math.hypot(slot.x - castles.green.x, slot.y - castles.green.y) < 300) {
+                        let choice;
+                        do {
+                            choice = prompt(
+                                "Escolha construção:\n" +
+                                "1) Torre Arqueira   (350💰)\n" +
+                                "2) Torre Curativa   (400💰)\n" +
+                                "3) Mina             (500💰)\n" +
+                                "4) Spawner Arqueiras (450💰)\n" +
+                                "H) Ajuda — ver estatísticas completas\n\n" +
+                                "Digite 1, 2, 3, 4 ou H."
+                            );
+                            if (!choice) return;               // cancelou
+                            choice = choice.trim().toUpperCase();
+                            if (choice === "H") {
+                                showHelp();                    // exibe alert com stats
+                            }
+                        } while (!["1", "2", "3", "4", "H"].includes(choice));
+
+                        // choice agora é "1", "2" ou "3"
+                        let key;
+                        if (choice === "1") key = "tower_arqueira";
+                        else if (choice === "2") key = "tower_curativa";
+                        else if (choice === "3") key = "mine";
+                        else if (choice === "4") key = "tower_spawner";
+
+                        const def = towerDefs[key];
+                        if (money < def.cost) {
+                            alert("Sem moedas suficientes!");
+                            return;
+                        }
+
+                        money -= def.cost;
+                        slot.occupied = {
+                            type: key,
+                            x: slot.x,
+                            y: slot.y,
+                            hp: def.hp,
+                            maxHp: def.maxHp,
+                            range: def.range,
+                            damage: def.damage,
+                            heal: def.heal,
+                            attackSpeed: def.attackSpeed,
+                            lastAttack: performance.now(),
+                            showRangeUntil: performance.now() + 10000,
+                            img: def.img,
+                            // relógio da Mina (undefined para torres)
+                            lastGoldTick: def.goldPerTick ? performance.now() : undefined,
+                            goldPerTick: def.goldPerTick,
+                            tickInterval: def.tickInterval,
+
+                            spawnInterval: def.spawnInterval,
+                            lastSpawn: 0
+                        };
+                    }
+
+                    return; // já tratou clique em slot, sai do listener
+                }
+            }
+
+            // 3) Se não foi em slot, segue o fluxo normal de spawn de tropas:
+            if (!selectedType) return;  // não escolheu tropa
+
+            const type = selectedType;
+            const def = troopDefs[type];
+
+            if (money < def.cost) {
+                alert("💰 Dinheiro insuficiente!");
+                return;
+            }
+
+            money -= def.cost;
+            renderShop(); // atualiza display da loja
+
+            // 3.1) lógica de upgrades/evolução (igual antes)
+            if (evolution[type]) {
+                purchaseCount[type] = (purchaseCount[type] || 0) + 1;
+            }
+            const ups = upgrades[type] || { hp: 0, dmg: 0, range: 0, speed: 0 };
+            const stats = { ...def };
+            let hpBonus = 20;
+            if (type === "golem" || type === "espadachim") hpBonus = 40;
+            else if (type === "assassino" || type === "curador") hpBonus = 30;
+
+            let isEvo = false;
+            if (evolution[type]?.unlocked && purchaseCount[type] % 3 === 0) {
+                Object.assign(stats, evolution[type].stats);
+                isEvo = true;
+            }
+
+            stats.hp += ups.hp * hpBonus;
+            stats.maxHp += ups.hp * hpBonus;
+            stats.damage += ups.dmg * 10;
+            stats.speed += ups.speed * 10;
+            stats.range = (stats.range || 0) + ups.range * 10;
+
+            // 3.2) cria tropa aliada
+            const t = {
+                type,
+                x: castles.green.x,
+                y: castles.green.y,
+                hp: stats.hp,
+                maxHp: stats.maxHp,
+                damage: stats.damage,
+                speed: stats.speed,
+                range: stats.range,
+                lastAttack: performance.now(),
+                _angle: 0,
+                isEvo,
+            };
+            if (type === "assassino") {
+                t.invisible = true;
+                t.invisibleUntil = performance.now() + 15000;
+                t.firstHit = true;
+            }
+            allies.push(t);
+
+            // 3.3) limpa seleção
+            document.querySelectorAll(".troop-btn").forEach(b => b.classList.remove("selected"));
+            selectedType = null;
+        });
+
+        // ←————— Função de Help — exibe stats de todas as construções —————→
+        function showHelp() {
+            const ta = towerDefs.tower_arqueira;
+            const tc = towerDefs.tower_curativa;
+            const m = towerDefs.mine;
+
+            let msg = "=== Estatísticas das Construções ===\n\n";
+
+            msg += "🏹 Torre Arqueira\n";
+            msg += `  Custo:   ${ta.cost} 💰\n`;
+            msg += `  Vida:    ${ta.hp}/${ta.maxHp}\n`;
+            msg += `  Alcance: ${ta.range}\n`;
+            msg += `  Dano:    ${ta.damage}\n`;
+            msg += `  Vel ATK: ${ta.attackSpeed} ms\n\n`;
+
+            msg += "💎 Torre Curativa\n";
+            msg += `  Custo:   ${tc.cost} 💰\n`;
+            msg += `  Vida:    ${tc.hp}/${tc.maxHp}\n`;
+            msg += `  Alcance: ${tc.range}\n`;
+            msg += `  Dano:    ${tc.damage}/s\n`;
+            msg += `  Cura:    ${tc.heal}/s\n`;
+            msg += `  Vel ATK: ${tc.attackSpeed} ms\n\n`;
+
+            msg += "⛏️ Mina\n";
+            msg += `  Custo:     ${m.cost} 💰\n`;
+            msg += `  Vida:      ${m.hp}/${m.maxHp}\n`;
+            msg += `  Produz:    ${m.goldPerTick} 💰 a cada ${m.tickInterval / 1000}s\n\n`;
+
+            msg += "🏠 Spawner de Arqueiras\n";
+            msg += `  Custo:           ${towerDefs.tower_spawner.cost} 💰\n`;
+            msg += `  Vida:            ${towerDefs.tower_spawner.hp}/${towerDefs.tower_spawner.maxHp}\n`;
+            msg += `  Gera 1 Arqueira a cada ${towerDefs.tower_spawner.spawnInterval / 1000}s\n\n`;
+
+
+            alert(msg);
+        }
+
+        function buildTowerAtSlot(slotIndex, type) {
+            const def = towerDefs[type];
+            const slot = towerSlots[slotIndex];
+            slot.occupied = {
+                type,
+                x: slot.x,
+                y: slot.y,
+                hp: def.hp,
+                maxHp: def.maxHp,
+                range: def.range,
+                damage: def.damage,
+                heal: def.heal,
+                attackSpeed: def.attackSpeed,
+                lastAttack: performance.now(),
+                showRangeUntil: performance.now() + 10000,
+                img: def.img,
+                lastGoldTick: def.goldPerTick ? performance.now() : undefined,
+                goldPerTick: def.goldPerTick,
+                tickInterval: def.tickInterval,
+                spawnInterval: def.spawnInterval,
+                lastSpawn: 0
+            };
+        }
+
+        function enemyBuildTower() {
+            const tipos = ["tower_arqueira", "tower_curativa"];
+            const freeSlots = [3, 4, 5].filter(i => !towerSlots[i].occupied);
+            const tipo = tipos[Math.floor(Math.random() * tipos.length)];
+
+            if (freeSlots.length > 0) {
+                const idx = freeSlots[Math.floor(Math.random() * freeSlots.length)];
+                buildTowerAtSlot(idx, tipo);
+            } else {
+                // cura 10% do HP máximo do castelo inimigo
+                const castle = castles.red;
+                castle.hp = Math.min(castle.maxHp, castle.hp + castle.maxHp * 0.1);
+            }
+        }
+
+
+
+        function spawnWave(count, side) {
+            const castle = side === "enemy" ? castles.red : castles.green;
+            if (side === "enemy" && hardMode) {
+                if (Math.random() < 0.5) enemyBuildTower();
+            }
+
+
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const types = Object.keys(troopDefs);
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    const def = troopDefs[type];
+                    const arr = side === "enemy" ? enemies : allies;
+                    const now = performance.now();
+
+                    const t = {
+                        type,
+                        x: castle.x,
+                        y: castle.y,
+                        hp: def.maxHp,
+                        maxHp: def.maxHp, // <-- ADICIONE ESTA LINHA
+                        damage: def.damage, // <-- se estiver usando t.damage nos ataques
+                        range: def.range,
+                        speed: def.speed,
+                        lastAttack: now,
+                        _angle: 0,
+                    };
+
+                    if (type === "assassino") {
+                        t.invisible = true;
+                        t.invisibleUntil = now + 15000;
+                        t.firstHit = true;
+                    }
+                    arr.push(t);
+                }, (i / count) * waveDuration);
+            }
+        }
+
+        function spawnEnemyInstant(type, options = {}) {
+            const def = troopDefs[type];
+            const now = performance.now();
+            const t = {
+                type,
+                x: castles.red.x,
+                y: castles.red.y,
+                hp: options.evolved ? evolution[type].stats.hp : def.maxHp,
+                maxHp: options.evolved ? evolution[type].stats.maxHp : def.maxHp,
+                damage: options.evolved && evolution[type].stats.damage !== undefined
+                    ? evolution[type].stats.damage : def.damage,
+                range: options.evolved && evolution[type].stats.range !== undefined
+                    ? evolution[type].stats.range : def.range,
+                speed: options.evolved && evolution[type].stats.speed !== undefined
+                    ? evolution[type].stats.speed : def.speed,
+                lastAttack: now,
+                _angle: 0,
+                isEvo: !!options.evolved
+            };
+            enemies.push(t);
+        }
+
+
+        function checkEndConditions() {
+            if (castles.red.hp <= 0) {
+                alert("🏆 Você venceu!");
+                resetGame();
+            }
+            if (castles.green.hp <= 0) {
+                alert("💀 Você perdeu!");
+                resetGame();
+            }
+        }
+
+        function resetGame() {
+            // por exemplo, recarregar a página:
+            window.location.reload();
+        }
+
+        let scale = 1;
+        const minScale = 0.5,
+            maxScale = 2;
+
+        // roda do mouse
+        canvas.addEventListener("wheel", (e) => {
+            e.preventDefault();
+            scale += -e.deltaY * 0.001;
+            scale = Math.min(maxScale, Math.max(minScale, scale));
+            draw();
+        });
+
+        // botões + / –
+        const zoomContainer = document.createElement("div");
+        zoomContainer.style.position = "absolute";
+        zoomContainer.style.top = "10px";
+        zoomContainer.style.right = "10px";
+        zoomContainer.innerHTML = `
+  <button id="zoomIn">+</button>
+  <button id="zoomOut">−</button>
+`;
+        document.body.appendChild(zoomContainer);
+        document.getElementById("zoomIn").onclick = () => {
+            scale = Math.min(maxScale, scale + 0.1);
+            draw();
+        };
+        document.getElementById("zoomOut").onclick = () => {
+            scale = Math.max(minScale, scale - 0.1);
+            draw();
+        };
+
+        // ======= Eventos de arraste para mover a câmera =======
+        canvas.addEventListener("mousedown", (e) => {
+            camera.dragging = true;
+            camera.lastX = e.clientX;
+            camera.lastY = e.clientY;
+            canvas.style.cursor = "grabbing";
+        });
+        window.addEventListener("mousemove", (e) => {
+            if (!camera.dragging) return;
+            const dx = e.clientX - camera.lastX;
+            const dy = e.clientY - camera.lastY;
+            camera.x -= dx;
+            camera.y -= dy;
+            camera.lastX = e.clientX;
+            camera.lastY = e.clientY;
+            clampCamera();
+            draw();
+        });
+        window.addEventListener("mouseup", () => {
+            camera.dragging = false;
+            canvas.style.cursor = "grab";
+        });
+
+        // Toques (mobile)
+        canvas.addEventListener("touchstart", (e) => {
+            camera.dragging = true;
+            camera.lastX = e.touches[0].clientX;
+            camera.lastY = e.touches[0].clientY;
+        });
+        window.addEventListener("touchmove", (e) => {
+            if (!camera.dragging) return;
+            const t = e.touches[0];
+            const dx = t.clientX - camera.lastX;
+            const dy = t.clientY - camera.lastY;
+            camera.x -= dx;
+            camera.y -= dy;
+            camera.lastX = t.clientX;
+            camera.lastY = t.clientY;
+            clampCamera();
+            draw();
+        });
+        window.addEventListener("touchend", () => {
+            camera.dragging = false;
+        });
+
+        function renderShop() {
+            const container = document.getElementById("upgrades");
+            container.innerHTML = "";
+
+            Object.entries(upgrades).forEach(([type, stats]) => {
+                // só mostra se existe troopDefs[type]
+                const div = document.createElement("div");
+                div.innerHTML = `<strong>${troopDefs[type].name}</strong><br>`;
+                // para cada stat possível
+                Object.keys(stats).forEach((stat) => {
+                    // melee não tem range
+                    if (stat === "range" && troopDefs[type].range <= 50) return;
+                    const lvl = stats[stat];
+                    const maxLvl = (stat === "range") ? 3 : 5;
+                    const disabled = lvl >= maxLvl ? "disabled" : "";
+                    div.innerHTML += `
+        <button data-type="${type}" data-stat="${stat}"
+                ${disabled}>
+          ${stat.toUpperCase()}: ${lvl}/${maxLvl}
+        </button>
+      `;
+                });
+                // evolução
+                if (evolution[type]) {
+                    const evo = evolution[type];
+                    const btnE = evo.unlocked ?
+                        `<span>Evolução desbloqueada</span>` :
+                        `<button data-evo="${type}">
+           Evoluir (${evo.cost}💰)
+         </button>`;
+                    div.innerHTML += `<div>${btnE}</div>`;
+                }
+                container.appendChild(div);
+            });
+        }
+
+        // Listener para os botões de upgrade / evolução na loja
+        document.getElementById("upgrades").addEventListener("click", (e) => {
+            const btn = e.target;
+
+            // 1) Upgrade de stat (100 💰)
+            if (btn.dataset.type && btn.dataset.stat) {
+                const type = btn.dataset.type;
+                const stat = btn.dataset.stat;
+                const maxLvl = stat === "range" ? 3 : 5;
+
+                if (money < 100) {
+                    return alert("Você não tem moedas suficientes para esse upgrade!");
+                }
+                if (upgrades[type][stat] >= maxLvl) {
+                    return alert(`${stat.toUpperCase()} já está no nível máximo!`);
+                }
+
+                // aplica o upgrade
+                money -= 100;
+                upgrades[type][stat]++;
+                renderShop();
+                return;
+            }
+
+            // 2) Compra de evolução
+            if (btn.dataset.evo) {
+                const type = btn.dataset.evo;
+                const evo = evolution[type];
+                if (evo.unlocked) return;
+                if (money < evo.cost) return alert("💰 Insuficiente para evoluir!");
+
+                money -= evo.cost;
+                evo.unlocked = true;
+                localStorage.setItem(`evo_${type}`, true);
+                renderShop();
+                return;
+            }
+        });
+
+
+        function clampCamera() {
+            const viewWidth = canvas.width / scale;
+            const viewHeight = canvas.height / scale;
+
+            const maxX = Math.min(WORLD_SIZE, castles.green.x + 100); // 100px além do castelo verde
+            camera.x = Math.max(0, Math.min(maxX - viewWidth, camera.x));
+            camera.y = Math.max(0, Math.min(WORLD_SIZE - viewHeight, camera.y));
+        }
+
+        // ======= Função de desenho =======
+        function draw() {
+            ctx.save();
+            ctx.scale(scale, scale);
+            // Limpa a tela
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Desenha o chão (ilha marrom)
+            ctx.fillStyle = "#8B4513"; // marrom
+            ctx.fillRect(-camera.x, -camera.y, WORLD_SIZE, WORLD_SIZE);
+
+            // Desenha castelos com círculo
+            for (const [key, c] of Object.entries(castles)) {
+                if (!c.img) continue;
+                const screenX = c.x - camera.x;
+                const screenY = c.y - camera.y;
+                // círculo
+                ctx.beginPath();
+                ctx.arc(screenX, screenY, 70, 0, Math.PI * 2);
+                ctx.fillStyle =
+                    key === "green" ? "rgba(0,255,0,0.3)" : "rgba(255,0,0,0.3)";
+                ctx.fill();
+                // imagem centralizada
+                ctx.drawImage(c.img, screenX - 64, screenY - 64, 128, 128);
+            }
+            // desenha os 6 slots como linhas semi-transparentes
+            ctx.save();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "rgba(255,255,255,0.5)";
+            towerSlots.forEach(slot => {
+                const sx = slot.x - camera.x;
+                const sy = slot.y - camera.y;
+                ctx.strokeRect(sx - slot.w / 2, sy - slot.h / 2, slot.w, slot.h);
+            });
+            ctx.restore();
+
+            // ———————— RENDER de cada torre ————————
+            towerSlots.forEach((slot, i) => {
+                const tw = slot.occupied;
+                if (!tw || tw.hp <= 0) return;
+
+                const sx = slot.x - camera.x;
+                const sy = slot.y - camera.y;
+
+                // Alcance
+                if (tw.showRangeUntil && performance.now() < tw.showRangeUntil) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, tw.range, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(0,255,0,0.3)";
+                    ctx.fill();
+                    ctx.restore();
+                } else {
+                    delete tw.showRangeUntil;
+                }
+
+                // Imagem
+                if (tw.img && tw.img.complete) {
+                    ctx.drawImage(tw.img, sx - 25, sy - 25, 50, 50);
+                } else {
+                    ctx.fillStyle = "#888";
+                    ctx.fillRect(sx - 25, sy - 25, 50, 50);
+                }
+
+                // Barra de vida
+                const pct = tw.hp / tw.maxHp;
+                ctx.fillStyle = "gray";
+                ctx.fillRect(sx - 20, sy - 35, 40, 6);
+                 // torres do inimigo (slots 3,4,5) ficam vermelhas, jogador verde
+                ctx.fillStyle = (i >= 3 ? "red" : "green");
+                ctx.fillRect(sx - 20, sy - 35, 40 * pct, 6);
+            });
+
+
+
+            allies.forEach((t) => drawTroop(t, "ally"));
+            enemies.forEach((t) => drawTroop(t, "enemy"));
+
+            ctx.restore(); // restaura o zoom original antes do HUD
+
+            // TODO: desenhar tropas, ondas, interface de moedas etc.
+            // Desenha tropas aliadas
+            // HUD do dinheiro
+            ctx.fillStyle = "white";
+            ctx.font = "20px sans-serif";
+            ctx.fillText(`Dinheiro: ${money} 💰`, 10, 30);
+
+            // Barras de vida dos castelos (topo da tela)
+            const barW = 200;
+            const pctG = castles.green.hp / castles.green.maxHp;
+            const pctR = castles.red.hp / castles.red.maxHp;
+
+            ctx.fillStyle = "gray";
+            ctx.fillRect(20, 50, barW, 12);
+            ctx.fillRect(20, 70, barW, 12);
+
+            ctx.fillStyle = "green";
+            ctx.fillRect(20, 50, barW * pctG, 12);
+            ctx.fillStyle = "red";
+            ctx.fillRect(20, 70, barW * pctR, 12);
+
+            // dentro de draw(), no final:
+            drawCastleIndicator();
+        }
+
+        function drawCastleIndicator() {
+            // posição na tela (após scale e camera)
+            const screenX = (castles.green.x - camera.x) * scale;
+            const screenY = (castles.green.y - camera.y) * scale;
+            // se o castelo estiver dentro da área visível, não desenha o indicador
+            if (
+                screenX >= 0 &&
+                screenX <= canvas.width &&
+                screenY >= 0 &&
+                screenY <= canvas.height
+            ) {
+                return;
+            }
+            // ajusta para ficar sempre dentro da tela (margem de 12.5px)
+            const dotX = Math.min(Math.max(screenX, 12.5), canvas.width - 12.5);
+            const dotY = Math.min(Math.max(screenY, 12.5), canvas.height - 12.5);
+
+            ctx.fillStyle = "green";
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, 12.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawCastle(c, color) {
+            const screenX = c.x - camera.x;
+            const screenY = c.y - camera.y;
+
+            // círculo de contorno
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, 70, 0, Math.PI * 2);
+            ctx.fillStyle =
+                color === "green" ? "rgba(0,255,0,0.3)" : "rgba(255,0,0,0.3)";
+            ctx.fill();
+
+            // barra de vida
+            const barW = 120 * (c.hp / c.maxHp);
+            ctx.fillStyle = "gray";
+            ctx.fillRect(screenX - 60, screenY - 80, 120, 8);
+            ctx.fillStyle = color;
+            ctx.fillRect(screenX - 60, screenY - 80, barW, 8);
+
+            // imagem
+            if (c.img) {
+                ctx.drawImage(c.img, screenX - 64, screenY - 64, 128, 128);
+            }
+        }
+
+        function update(ts) {
+            [...allies, ...enemies].forEach((t) => {
+                if (t.type === "assassino" && t.invisible) {
+                    // só vence por tempo se ainda NÃO atacou
+                    if (t.firstHit && ts >= t.invisibleUntil) {
+                        t.invisible = false;
+                        t.firstHit = true;        // garante que não volte
+                    }
+                }
+
+                // Se o efeito de slow expirou, restaura a velocidade original
+                if (t.slowExpires && ts >= t.slowExpires) {
+                    t.speed = troopDefs[t.type].speed;
+                    delete t.originalSpeed;
+                    delete t.slowExpires;
+                }
+            });
+
+            console.log("update, money =", money);
+            const dt = (ts - lastTime) / 1000;
+
+
+            // Regeneração do castelo vermelho em hard mode
+            if (hardMode) {
+                const since = ts - castles.red.lastHitTime;
+                if (since >= 20000 && castles.red.hp > 0 && castles.red.hp < castles.red.maxHp) {
+                    // dt em segundos
+                    castles.red.hp = Math.min(
+                        castles.red.maxHp,
+                        castles.red.hp + 10 * dt
+                    );
+                }
+            }
+            lastTime = ts;
+
+            // dentro de update(ts), após regeneração do red castle:
+            checkHardModeTriggers();
+
+
+            // para cada torre construída
+            // ———————— ATUALIZAÇÃO de cada torre ————————
+            towerSlots.forEach((slot, i) => {
+                const tw = slot.occupied;
+                if (!tw) return;
+
+                if (tw.type === "mine") {
+                    if (ts - tw.lastGoldTick >= tw.tickInterval) {
+                        money += tw.goldPerTick;
+                        tw.lastGoldTick = ts;
+                    }
+                    return; // mina não faz mais nada (não ataca/é curada)
+                }
+
+                if (tw.type === "tower_spawner") {
+                    if (ts - tw.lastSpawn >= tw.spawnInterval) {
+                        tw.lastSpawn = ts;
+                        const def = troopDefs.arqueiro;
+                        const nova = {
+                            type: "arqueiro",
+                            x: tw.x,
+                            y: tw.y,
+                            hp: def.maxHp,
+                            maxHp: def.maxHp,
+                            damage: def.damage,
+                            range: def.range,
+                            speed: def.speed,
+                            lastAttack: ts,
+                            _angle: 0
+                        };
+                        // se for slot inimigo (índices 3,4,5), é inimigo; senão, aliado
+                        if (i >= 3) enemies.push(nova);
+                        else allies.push(nova);
+                    }
+                    return;
+                }
+
+                // 1.1) Ataque / Cura
+                if (tw.hp > 0 && ts - tw.lastAttack >= tw.attackSpeed) {
+                    if (tw.type === "tower_curativa") {
+                        // define alvos conforme o lado da torre (i < 3 = jogador; i >= 3 = inimigo)
+                        const healTargets = (i >= 3 ? enemies : allies);
+                        const attackTargets = (i >= 3 ? allies : enemies);
+
+                        // 1) cura suas próprias tropas
+                        healTargets.forEach(unit => {
+                            const d = Math.hypot(unit.x - tw.x, unit.y - tw.y);
+                            if (d <= tw.range) {
+                                unit.hp = Math.min(unit.maxHp, unit.hp + tw.heal);
+                            }
+                        });
+
+                        // 2) encontra e ataca tropas do oponente
+                        let curTarget = null, curMinD = Infinity;
+                        attackTargets.forEach(unit => {
+                            const d = Math.hypot(unit.x - tw.x, unit.y - tw.y);
+                            if (d < curMinD) {
+                                curMinD = d;
+                                curTarget = unit;
+                            }
+                        });
+                        if (curTarget && curMinD <= tw.range) {
+                            const killed = applyDamage(curTarget, tw.damage);
+                            if (killed) money += rewardForKill[curTarget.type] || 0;
+                        }
+                    }
+
+                    else if (tw.type === "tower_arqueira") {
+                        // define targets conforme o lado da torre
+                        const attackTargets = (i >= 3 ? allies : enemies);
+
+                        let target = null, minD = Infinity;
+                        attackTargets.forEach(u => {
+                            const d = Math.hypot(u.x - tw.x, u.y - tw.y);
+                            if (d < minD) {
+                                minD = d;
+                                target = u;
+                            }
+                        });
+                        if (target && minD <= tw.range) {
+                            const killed = applyDamage(target, tw.damage);
+                            if (killed) money += rewardForKill[target.type] || 0;
+                        }
+                        tw.lastAttack = ts;
+                    }
+                }
+
+                // 1.2) Explosão da torre curativa ao morrer
+                if (tw.hp <= 0) {
+                    if (tw.type === "tower_curativa") {
+                        const R = 550;
+                        allies.forEach(a => {
+                            if (Math.hypot(a.x - tw.x, a.y - tw.y) <= R) {
+                                a.hp = Math.min(a.maxHp, a.hp + 1500);
+                            }
+                        });
+                        enemies.forEach(e => {
+                            if (Math.hypot(e.x - tw.x, e.y - tw.y) <= R) {
+                                applyDamage(e, 350);
+                            }
+                        });
+                    }
+                    slot.occupied = null;
+                }
+            });
+
+
+            // Dentro de update(ts), antes de moveTroops / projéteis:
+            towerSlots.forEach((slot, i) => {
+                const tw = slot.occupied;
+                if (tw && tw.hp <= 0) {
+                    // 1) Se for torre *inimiga* (índices 3,4,5):
+                    if (i >= 3) {
+                        money += rewardForKill.tower_arqueira || 0;
+                    }
+                    // 2) Libera o slot
+                    slot.occupied = null;
+                }
+            });
+
+
+            function moveTroops(list, opponents, castleTarget) {
+                const isEnemy = list === enemies;
+
+                list.forEach((t) => {
+                    const def = troopDefs[t.type];
+                    const damage = t.damage !== undefined ? t.damage : def.damage;
+                    // 1) busca tropa inimiga mais próxima:
+                    let target = null;
+                    let minD = Infinity;
+                    opponents.forEach((o) => {
+                        if (o.type === "assassino" && o.invisible) return; // <-- AQUI
+                        const dx = o.x - t.x,
+                            dy = o.y - t.y;
+                        const d = Math.hypot(dx, dy);
+                        if (d < minD) {
+                            minD = d;
+                            target = o;
+                        }
+                    });
+                    // 2) se não achou tropa, mira no castelo:
+                    if (!target) {
+                        const c = castleTarget;
+                        const dx = c.x - t.x,
+                            dy = c.y - t.y;
+                        minD = Math.hypot(dx, dy);
+                        target = c;
+                    }
+
+                    // 3) se estiver fora do alcance, anda em direção:
+                    if (minD > t.range) {
+                        const vx = (target.x - t.x) / minD;
+                        const vy = (target.y - t.y) / minD;
+                        const speed = t.speed !== undefined ? t.speed : def.speed;
+                        t.x += vx * speed * dt;
+                        t.y += vy * speed * dt;
+                        t._angle = Math.atan2(vy, vx); // guarda ângulo para render
+                    } else {
+                        // Arqueiro dispara flecha
+                        if (
+                            t.type === "arqueiro" &&
+                            ts - t.lastAttack >= def.attackSpeed
+                        ) {
+                            const vx = Math.cos(t._angle);
+                            const vy = Math.sin(t._angle);
+                            projectiles.push({
+                                x: t.x + vx * 20,
+                                y: t.y + vy * 20,
+                                vx: vx * 400,
+                                vy: vy * 400,
+                                angle: t._angle,
+                                damage: t.damage,
+                                side: list === allies ? "ally" : "enemy",
+                            });
+                            t.lastAttack = ts;
+                        }
+
+                        // Mago lança ataque mágico (parecido com flecha, mas com lentidão)
+                        else if (t.type === "mago" && ts - t.lastAttack >= def.attackSpeed) {
+                            const vx = Math.cos(t._angle);
+                            const vy = Math.sin(t._angle);
+                            projectiles.push({
+                                x: t.x + vx * 20,
+                                y: t.y + vy * 20,
+                                vx: vx * 350,
+                                vy: vy * 350,
+                                angle: t._angle,
+                                damage: t.damage,
+                                slowFactor: 0.5, // aplica lentidão
+                                slowDuration: 3000, // 3 segundos em ms
+                                side: list === allies ? "ally" : "enemy",
+                            });
+                            t.lastAttack = ts;
+                        }
+
+                        // Espadachim: ataque corpo-a-corpo direto
+                        else if (
+                            t.type === "espadachim" &&
+                            minD <= t.range &&              // <-- aqui
+                            ts - t.lastAttack >= def.attackSpeed
+                        ) {
+                            const killed = applyDamage(
+                                target,
+                                t.damage * (def.attackSpeed / 1000)
+                            );
+                            t.lastAttack = ts;
+
+                            // Se matou tropa inimiga, dá a recompensa certa
+                            if (killed && list === allies && target !== castleTarget) {
+                                money += rewardForKill[target.type] || 0;
+                            }
+
+                            // Se foi hit no castelo, ganha 10 💰
+                            if (target === castleTarget) {
+                                money += 10;
+                                castleTarget.lastHitTime = ts;
+                                checkEndConditions();
+                            }
+                        }
+
+                        // Curador: cura aliados próximos
+                        else if (
+                            t.type === "curador" &&
+                            ts - t.lastAttack >= def.attackSpeed
+                        ) {
+                            let healed = false;
+                            list.forEach((ally) => {
+                                if (ally !== t && ally.hp < ally.maxHp) {
+                                    const dx = ally.x - t.x;
+                                    const dy = ally.y - t.y;
+                                    const d = Math.hypot(dx, dy);
+                                    if (d <= t.range) {
+                                        ally.hp = Math.min(
+                                            ally.maxHp,
+                                            ally.hp + def.heal
+                                        );
+                                        healed = true;
+                                    }
+                                }
+                            });
+
+                            // Se não curou ninguém, ataca
+                            if (!healed && target.hp > 0) {
+                                target.hp -= t.damage;
+
+                                // 🔸 Se matou tropa inimiga
+                                if (
+                                    target !== castleTarget &&
+                                    target.hp <= 0 &&
+                                    list === allies
+                                ) {
+                                    const arr = list === allies ? enemies : allies;
+                                    const index = arr.indexOf(target);
+                                    if (index !== -1) {
+                                        arr.splice(index, 1);
+                                        money += rewardForKill[target.type] || 0;
+                                        console.log(
+                                            `💥 Curador matou ${target.type}, ganhou moedas! Total: ${money}`
+                                        );
+                                    }
+                                }
+
+                                // 🔸 Se atacou castelo inimigo e ele morreu
+                                if (target === castleTarget) {
+                                    // O curador ganha 10 moedas toda vez que ataca o castelo
+                                    money += 10;
+                                    castleTarget.lastHitTime = ts;
+                                    console.log(
+                                        `💥 Curador atacou o castelo inimigo! Ganhou 10 moedas. Total: ${money}`
+                                    );
+                                    checkEndConditions();
+                                }
+                            }
+
+                            t.lastAttack = ts;
+                        }
+                        // Assassino: ataque corpo-a-corpo furtivo
+                        else if (
+                            t.type === "assassino" &&
+                            minD <= t.range &&              // <-- aqui
+                            ts - t.lastAttack >= def.attackSpeed
+                        ) {
+                            // Dano crítico no primeiro ataque
+                            const dmg = t.firstHit ? 450 : def.damage;
+                            const killed = applyDamage(target, dmg);
+
+                            // Se era o primeiro ataque, fica visível
+                            if (t.firstHit) {
+                                t.firstHit = false;
+                                t.invisible = false;
+                            }
+
+                            if (killed && target !== castleTarget && list === allies) {
+                                money += rewardForKill[target.type] || 0;
+                                console.log(
+                                    `💥 Assassino matou ${target.type}, ganhou moedas! Total: ${money}`
+                                );
+                            }
+
+                            // Adiciona as moedas quando atacar o castelo
+                            if (target === castleTarget) {
+                                money += 10; // Ganha 10 moedas por atacar o castelo
+                                castleTarget.lastHitTime = ts;
+                                console.log(
+                                    `💥 Assassino atacou o castelo! Ganhou 10 moedas. Total: ${money}`
+                                );
+                                checkEndConditions();
+                            }
+
+                            t.lastAttack = ts;
+
+                            // Se matou um inimigo
+                            // logo após diminuir target.hp...
+                        }
+                        // —————— Ataque do Golem ——————
+                        else if (
+                            t.type === "golem" &&
+                            minD <= t.range &&              // <-- aqui
+                            ts - t.lastAttack >= def.attackSpeed
+                        ) {
+
+                            // só ataca corpo-a-corpo a 30px (def.range já é 30)
+                            let dmg = t.damage; // base 200
+                            // 4× de dano contra assassino ou espadachim
+                            if (target.type === "assassino" || target.type === "espadachim") {
+                                dmg *= 4; // vira 800
+                            }
+                            const killed = applyDamage(target, dmg);
+                            t.lastAttack = ts;
+
+                            // recompensa normal por tropa morta
+                            if (killed && list === allies && target !== castleTarget) {
+                                money += rewardForKill[target.type] || 0;
+                            }
+                            // recompensa extra se for o Golem que matou
+                            if (killed && list === allies) {
+                                money += rewardForKill.golem; // 380
+                            }
+
+                            // dano ao castelo inimigo
+                            if (target === castleTarget) {
+                                money += 10;
+                                castleTarget.lastHitTime = ts;
+                                checkEndConditions();
+                            }
+                        }
+                    }
+                });
+            }
+
+            // para aliados, as torres inimigas também são alvos
+            const enemyTowers = towerSlots
+                .map(s => s.occupied)
+                .map((t, i) => ({ t, i }))       // pega também o índice
+                .filter(({ t, i }) => i >= 3 && t && t.hp > 0)  // índices 3,4,5 são slots vermelhos
+                .map(({ t }) => t);              // volta só a torre
+
+            moveTroops(allies, [...enemies, ...enemyTowers], castles.red);
+
+            // para inimigos, as torres aliadas são alvos
+            const allyTowers = towerSlots
+                .map(s => s.occupied)
+                .map((t, i) => ({ t, i }))
+                .filter(({ t, i }) => i < 3 && t && t.hp > 0)   // índices 0,1,2 são slots verdes
+                .map(({ t }) => t);
+
+            moveTroops(enemies, [...allies, ...allyTowers], castles.green);
+
+
+
+            checkEndConditions();
+
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const p = projectiles[i];
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+
+                // Remove se sair do mundo
+                if (p.x < 0 || p.x > WORLD_SIZE || p.y < 0 || p.y > WORLD_SIZE) {
+                    projectiles.splice(i, 1);
+                    continue;
+                }
+
+                // === Verifica colisão com castelo ===
+                if (p.side === "ally") {
+                    const dx = p.x - castles.red.x;
+                    const dy = p.y - castles.red.y;
+                    if (Math.hypot(dx, dy) < 70) {
+                        castles.red.hp -= p.damage;
+                        castles.red.lastHitTime = performance.now();
+                        money += 10;
+                        checkEndConditions();
+                        console.log(
+                            "💰 Ganhou 10 moedas ao atingir castelo vermelho:",
+                            money
+                        );
+                        projectiles.splice(i, 1);
+                        continue;
+                    }
+                } else {
+                    const dx = p.x - castles.green.x;
+                    const dy = p.y - castles.green.y;
+                    if (Math.hypot(dx, dy) < 70) {
+                        castles.green.hp -= p.damage;
+                        projectiles.splice(i, 1);
+                        continue;
+                    }
+                }
+
+                // === Verifica colisão com torres inimigas ===
+                const towerList = p.side === "ally"
+                    ? towerSlots.map(s => s.occupied)
+                    : towerSlots.map(s => s.occupied);
+                for (const tw of towerList) {
+                    if (!tw || tw.hp <= 0) continue;
+                    const dx = p.x - tw.x, dy = p.y - tw.y;
+                    if (Math.hypot(dx, dy) < 25 /* ou metade do w/h */) {
+                        tw.hp -= p.damage;
+                        if (tw.hp <= 0) {
+                            // opcional: liberar o slot
+                            const slot = towerSlots.find(s => s.occupied === tw);
+                            if (slot) slot.occupied = null;
+                        }
+                        projectiles.splice(i, 1);
+                        break;
+                    }
+                }
+
+
+                // === Verifica colisão com tropas ===
+                const targets = p.side === "ally" ? enemies : allies;
+                for (let j = 0; j < targets.length; j++) {
+                    const t = targets[j];
+                    const dx = t.x - p.x;
+                    const dy = t.y - p.y;
+                    const d = Math.hypot(dx, dy);
+                    if (d < 16) {
+                        t.hp -= p.damage;
+                        if (t.hp <= 0) {
+                            money += rewardForKill[t.type] || 0;
+                            targets.splice(j, 1);
+                        }
+
+                        // aplica efeito de lentidão:
+                        if (p.slowFactor && t.type !== "castelo") {
+                            t.originalSpeed = troopDefs[t.type].speed; // guarda a velocidade normal
+                            t.speed = t.originalSpeed * p.slowFactor; // reduz para 20%
+                            t.slowExpires = performance.now() + p.slowDuration;
+                        }
+                        projectiles.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 5) drawTroop(t, side): rotaciona sprite segundo t._angle
+        function drawTroop(t, side) {
+            if (side === "ally" && t.type === "assassino" && t.invisible) {
+                return;
+            }
+
+            // somente invisíveis **inimigos** ganham ghost bar
+            // ─────── 2) Inimigo invisível: ghost‐bar ───────
+            if (side === "enemy" && t.type === "assassino" && t.invisible) {
+                const sx = t.x - camera.x;
+                const sy = t.y - camera.y;
+                // pct entre 0 e 1
+                const pct = Math.max(
+                    0,
+                    Math.min(1, t.hp / troopDefs.assassino.maxHp)
+                );
+                const hpW = 40 * pct;
+                // fundo cinza
+                ctx.fillStyle = "rgba(100,100,100,0.5)";
+                ctx.fillRect(sx - 20, sy - 30, 40, 6);
+                // barra vermelha
+                ctx.fillStyle = "rgba(255,0,0,0.7)";
+                ctx.fillRect(sx - 20, sy - 30, hpW, 6);
+                return;
+            }
+
+            const def = troopDefs[t.type];
+            const sx = t.x - camera.x;
+            const sy = t.y - camera.y;
+            const size = 32;
+            // se não houver ângulo ainda (por ex. acabou de spawnar), assume 0
+            const angle = t._angle || 0;
+            // componente X do vetor de movimento
+            const dirX = Math.cos(angle);
+
+            ctx.save();
+            ctx.translate(sx, sy);
+
+            // Se estiver indo para a esquerda, espelha horizontalmente
+            if (dirX < 0) {
+                ctx.scale(-1, 1);
+            }
+
+            // Desenha sempre sem rotação — o sprite virado para a direita
+            // será espelhado se dirX<0, ou normal se dirX>=0
+            ctx.drawImage(def.img, -size / 2, -size / 2, size, size);
+
+            ctx.restore();
+
+            // barra de vida
+            const hpW = 40 * (t.hp / t.maxHp);
+            ctx.fillStyle = "gray";
+            ctx.fillRect(sx - 20, sy - 30, 40, 6);
+            ctx.fillStyle =
+                side === "ally" ? (t.type === "curador" ? "blue" : "green") : "red";
+            ctx.fillRect(sx - 20, sy - 30, hpW, 6);
+
+            if (t.isEvo) {
+                ctx.save();
+                ctx.globalAlpha = 0.4;
+                ctx.strokeStyle = "blue";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(sx, sy, 30, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+        }
+
+        function gameLoop(ts) {
+            update(ts);
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.getElementById("btnToggleShop").addEventListener("click", () => {
+            const shop = document.getElementById("shop");
+            shop.style.display = shop.style.display === "none" ? "block" : "none";
+        });
+
+
+        // Menu de dificuldade
+        document.querySelectorAll("#menu button").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+                const diff = e.target.dataset.diff;
+                startGame(diff);
+                alert(
+                    "Para mover a câmera, arraste o game para cima, para baixo, para a esquerda e para a direita."
+                );
+                requestAnimationFrame(gameLoop);
+                document.getElementById("menu").style.display = "none";
+            });
+        });
+
+        // Redesenha sempre que a janela for redimensionada
+        window.addEventListener("resize", () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            clampCamera();
+            draw();
+        });
+
+        // Inicialização
+        window.dispatchEvent(new Event("resize"));
+
+        renderShop();
+    </script>
+</body>
+
+</html>
