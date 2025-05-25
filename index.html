@@ -1,234 +1,373 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<title>Ilha da Sobrevivência</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  html, body { margin:0; overflow:hidden; background:#66c2ff; }
-  canvas { display:block; background:#66c2ff; }
-  #hud { position:absolute; bottom:0; left:50%; transform:translateX(-50%); display:flex; }
-  .slot { width:48px; height:48px; border:2px solid #333; margin:2px; background:#ccc; position:relative; }
-  .slot.selected { border-color:yellow; }
-  .slot img { width:100%; height:100%; pointer-events:none; }
-  #btnAttack, #btnCraft, #btnConsume {
-    position:absolute; padding:8px 12px; font-size:14px;
-  }
-  #btnAttack { right:10px; bottom:140px; }
-  #btnConsume { right:10px; bottom:100px; }
-  #btnCraft { left:10px; bottom:130px; }
-  #craftPanel { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:340px; background:rgba(0,0,0,0.8); padding:20px; display:none; color:#fff; display:flex; flex-wrap:nowrap; gap:8px; justify-content:center; align-items:center; }
-#craftPanel button { flex:1 1 auto; min-width:100px; padding:8px; font-size:14px; background:#444; color:#fff; border:none; border-radius:4px; cursor:pointer; }
-#btnCloseCraft { position:absolute; top:8px; right:8px; }
-#btnCraft { bottom:130px !important; }  /* sobe o botão de Craft 30px */
-  #statusBars { position:absolute; top:10px; left:10px; }
-  .bar { width:200px; height:20px; background:#555; margin-bottom:4px; position:relative; }
-  .fill { height:100%; }
-  #barHealth .fill { background:rgb(255,0,0); }
-  #barHunger .fill { background:#8b4513; } /* marrom */
-  #barThirst .fill { background:#87cefa; } /* azul claro */
-  #joystick {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  width: 100px;
-  height: 100px;
-  background: #666;
-  border-radius: 50%;
-  /* passa a ser relativo para o filho */
-  position: relative;
-}
-#stick {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  background: #222;
-  border-radius: 50%;
-  top: 50%;
-  left: 50%;
-  /* removemos o translate fixo daqui */
-  transform: translate(-13px, -13px);
-}
+  <meta charset="UTF-8">
+  <title>Ilha da Sobrevivência</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html,
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #66c2ff;
+    }
 
-#plantPanel {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 300px;           /* ajuste conforme precisar */
-  background: rgba(0,0,0,0.8);
-  padding: 20px;
-  display: none;
-  color: #fff;
-  border-radius: 6px;
-  z-index: 1000;
-}
+    canvas {
+      display: block;
+      background: #66c2ff;
+    }
 
-/* Destaque de slot selecionado */
-#plantPanel .slot.selected {
-  border-color: yellow;
-}
+    #hud {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+    }
 
-#btn-minigame {
-  margin-top: 6px;
-  padding: 6px 12px;
-  font-size: 14px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
+    .slot {
+      width: 48px;
+      height: 48px;
+      border: 2px solid #333;
+      margin: 2px;
+      background: #ccc;
+      position: relative;
+    }
 
-#btn-minigame:hover {
-  background-color: #0056b3;
-}
+    .slot.selected {
+      border-color: yellow;
+    }
 
-/* ======================
+    .slot img {
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    #btnAttack,
+    #btnCraft,
+    #btnConsume {
+      position: absolute;
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+
+    #btnAttack {
+      right: 10px;
+      bottom: 140px;
+    }
+
+    #btnConsume {
+      right: 10px;
+      bottom: 100px;
+    }
+
+    #btnCraft {
+      left: 10px;
+      bottom: 130px;
+    }
+
+    #craftPanel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 340px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      display: none;
+      color: #fff;
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #craftPanel button {
+      flex: 1 1 auto;
+      min-width: 100px;
+      padding: 8px;
+      font-size: 14px;
+      background: #444;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #btnCloseCraft {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+    }
+
+    #btnCraft {
+      bottom: 130px !important;
+    }
+
+    /* sobe o botão de Craft 30px */
+    #statusBars {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+    }
+
+    .bar {
+      width: 200px;
+      height: 20px;
+      background: #555;
+      margin-bottom: 4px;
+      position: relative;
+    }
+
+    .fill {
+      height: 100%;
+    }
+
+    #barHealth .fill {
+      background: rgb(255, 0, 0);
+    }
+
+    #barHunger .fill {
+      background: #8b4513;
+    }
+
+    /* marrom */
+    #barThirst .fill {
+      background: #87cefa;
+    }
+
+    /* azul claro */
+    #joystick {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      width: 100px;
+      height: 100px;
+      background: #666;
+      border-radius: 50%;
+      /* passa a ser relativo para o filho */
+      position: relative;
+    }
+
+    #stick {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background: #222;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      /* removemos o translate fixo daqui */
+      transform: translate(-13px, -13px);
+    }
+
+    #plantPanel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      /* ajuste conforme precisar */
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      display: none;
+      color: #fff;
+      border-radius: 6px;
+      z-index: 1000;
+    }
+
+    /* Destaque de slot selecionado */
+    #plantPanel .slot.selected {
+      border-color: yellow;
+    }
+
+    #btn-minigame {
+      margin-top: 6px;
+      padding: 6px 12px;
+      font-size: 14px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #btn-minigame:hover {
+      background-color: #0056b3;
+    }
+
+    /* ======================
    Responsividade Mobile
    ====================== */
-   @media screen and (max-width: 918px), screen and (max-height: 452px) {
-  /* Diminui o painel de Craft */
-  #craftPanel {
-    width: 70%;
-    padding: 10px;
-    gap: 4px;
-    flex-wrap: wrap;
-  }
-  #craftPanel button {
-    min-width: 80px;
-    padding: 6px;
-    font-size: 12px;
-  }
+    @media screen and (max-width: 918px),
+    screen and (max-height: 452px) {
 
-  /* Diminui o painel da Usina */
-  #plantPanel {
-    width: 85%;
-    padding: 10px;
-  }
-  #plantPanel h4 {
-    font-size: 16px;
-  }
-  #plantPanel .slot {
-    width: 36px;
-    height: 36px;
-  }
-  #plantPanel button {
-    padding: 6px 8px;
-    font-size: 12px;
-    margin-bottom: 4px;
-  }
-  #plantProgressContainer {
-    width: 100%;
-    height: 10px;
-  }
+      /* Diminui o painel de Craft */
+      #craftPanel {
+        width: 70%;
+        padding: 10px;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
 
-  /* Diminui o painel do Baú */
-  #chestPanel {
-    width: 85%;
-    padding: 10px;
-  }
-  #chestPanel h4 {
-    font-size: 16px;
-  }
-  #chestSlots .slot {
-    width: 36px;
-    height: 36px;
-    margin: 2px;
-  }
-  #chestPanel button {
-    padding: 6px 8px;
-    font-size: 12px;
-  }
+      #craftPanel button {
+        min-width: 80px;
+        padding: 6px;
+        font-size: 12px;
+      }
 
-  /* Botões de ação principais (exceto ajuda) */
-  #btnAttack,
-  #btnConsume,
-  #btnCraft,
-  #btnToggleTool,
-  #btnOpenChest,
-  #btnOpenPlant,
-  #btnBuyChest {
-    padding: 6px 8px;
-    font-size: 12px;
-  }
+      /* Diminui o painel da Usina */
+      #plantPanel {
+        width: 85%;
+        padding: 10px;
+      }
 
-  /* Remove o contorno azul ao tocar/focar em botões */
-button,
-#btnAttack,
-#btnCraft,
-#btnUpgradePack,
-#craftAxe,
-#craftSword,
-#craftFiber,
-#craftRope {
-  outline: none;
-  -webkit-tap-highlight-color: transparent; /* Chrome/Safari no iOS/Android */
-  -moz-tap-highlight-color: transparent;    /* Firefox Android */
-  touch-action: manipulation;               /* evita double-tap em alguns browsers */
-}
+      #plantPanel h4 {
+        font-size: 16px;
+      }
+
+      #plantPanel .slot {
+        width: 36px;
+        height: 36px;
+      }
+
+      #plantPanel button {
+        padding: 6px 8px;
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+
+      #plantProgressContainer {
+        width: 100%;
+        height: 10px;
+      }
+
+      /* Diminui o painel do Baú */
+      #chestPanel {
+        width: 85%;
+        padding: 10px;
+      }
+
+      #chestPanel h4 {
+        font-size: 16px;
+      }
+
+      #chestSlots .slot {
+        width: 36px;
+        height: 36px;
+        margin: 2px;
+      }
+
+      #chestPanel button {
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+
+      /* Botões de ação principais (exceto ajuda) */
+      #btnAttack,
+      #btnConsume,
+      #btnCraft,
+      #btnToggleTool,
+      #btnOpenChest,
+      #btnOpenPlant,
+      #btnBuyChest {
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+
+      /* Remove o contorno azul ao tocar/focar em botões */
+      button,
+      #btnAttack,
+      #btnCraft,
+      #btnUpgradePack,
+      #craftAxe,
+      #craftSword,
+      #craftFiber,
+      #craftRope {
+        outline: none;
+        -webkit-tap-highlight-color: transparent;
+        /* Chrome/Safari no iOS/Android */
+        -moz-tap-highlight-color: transparent;
+        /* Firefox Android */
+        touch-action: manipulation;
+        /* evita double-tap em alguns browsers */
+      }
 
 
-  /* Ajusta status bars para telas pequenas */
-  #statusBars .bar {
-    width: 150px;
-    height: 16px;
-  }
-}
-
-
-</style>
+      /* Ajusta status bars para telas pequenas */
+      #statusBars .bar {
+        width: 150px;
+        height: 16px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<canvas id="game"></canvas>
-<div id="hud"></div>
-<button id="startGameBtn" style="position:fixed; bottom:10px; left:10px; z-index:1000;">Tela Cheia</button>
-<button id="btnAttack">Atacar (J)</button>
-<button id="btnConsume">Consumir</button>
-<button id="btnCraft">Craft</button>
-<button id="btnToggleTool" style="position:absolute; top:80px; right:10px;">Guardar/Equipar</button>
+  <canvas id="game"></canvas>
+  <div id="hud"></div>
+  <button id="startGameBtn" style="position:fixed; bottom:10px; left:10px; z-index:1000;">Tela Cheia</button>
+  <button id="btnAttack">Atacar (J)</button>
+  <button id="btnConsume">Consumir</button>
+  <button id="btnCraft">Craft</button>
+  <button id="btnToggleTool" style="position:absolute; top:80px; right:10px;">Guardar/Equipar</button>
 
 
-<div id="craftPanel"  style="display:none;">
-  <button id="btnCloseCraft" style="position:absolute; top:8px; right:8px;">✕</button>
-  <h4>Craft</h4>
-  <button id="craftPack">Mochila (20 cordas, 10 madeiras)</button><br>
-  <button id="craftFiber">Criar Fibra (6 folhas)</button>
-<button id="craftRope">Criar Corda (3 fibras)</button>
-<button id="btnBuyChest">Comprar Baú (10🪵,25🪨,3🍃)</button>
+  <div id="craftPanel" style="display:none;">
+    <button id="btnCloseCraft" style="position:absolute; top:8px; right:8px;">✕</button>
+    <h4>Craft</h4>
+    <button id="craftPack">Mochila (20 cordas, 10 madeiras)</button><br>
+    <button id="craftFiber">Criar Fibra (6 folhas)</button>
+    <button id="craftRope">Criar Corda (3 fibras)</button>
+    <button id="btnBuyChest">Comprar Baú (10🪵,25🪨,3🍃)</button>
 
-<button id="plantSeed">Plantar Semente</button>
-<button id="craftRaft">Construir Jangada (198 🌲, 20 🪨, 50 🪢, 40 🪶)</button>
-<button id="craftPotion">Poção Mágica (5 folhas, 16 frutas, 8 cocos)</button>
-<button id="craftZoomPotion">Poção de Zoom (10 folhas, 5 fibras)</button>
-<div class="armaduras" style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;"></div>
-<button id="craftWoodArmor">Armadura de Madeira (4 🍃, 20 🪵)</button>
+    <button id="plantSeed">Plantar Semente</button>
+    <button id="craftRaft">Construir Jangada (198 🌲, 20 🪨, 50 🪢, 40 🪶)</button>
+    <button id="craftPotion">Poção Mágica (5 folhas, 16 frutas, 8 cocos)</button>
+    <button id="craftZoomPotion">Poção de Zoom (10 folhas, 5 fibras)</button>
+    <div class="armaduras" style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+    <button id="craftWoodArmor">Armadura de Madeira (4 🍃, 20 🪵)</button>
 
-  <button id="craftAxe">Machado de Pedra (5 🪨, 10 🌿)</button>
-  <button id="craftSickle">Foice (12 🌲, 20 🪨)</button>
-  <button id="craftSword">Espada de Pedra (15🌲,12🪨)</button>
-  <button id="craftPlant">Construir Usina (30 🌲,30 pedras,1 poção,4 cordas)</button>
+    <button id="craftAxe">Machado de Pedra (5 🪨, 10 🌿)</button>
+    <button id="craftSickle">Foice (12 🌲, 20 🪨)</button>
+    <button id="craftSword">Espada de Pedra (15🌲,12🪨)</button>
+    <button id="craftPlant">Construir Usina (30 🌲,30 pedras,1 poção,4 cordas)</button>
 
 
-<button id="btnUpgradePack">Upgrade Mochila</button>
-</div>
-
-<div id="statusBars">
-    <div id="barHealth" class="bar"><div class="fill" style="width:100%"></div></div>
-    <div id="barHunger" class="bar"><div class="fill" style="width:100%"></div></div>
-    <div id="barThirst" class="bar"><div class="fill" style="width:100%"></div></div>
-          <button id="btn-minigame" onclick="window.location.href='batalha.html'">
-        Ir para Minigame
-    </button>
+    <button id="btnUpgradePack">Upgrade Mochila</button>
   </div>
-  
+
+  <div id="statusBars">
+    <div id="barHealth" class="bar">
+      <div class="fill" style="width:100%"></div>
+    </div>
+    <div id="barHunger" class="bar">
+      <div class="fill" style="width:100%"></div>
+    </div>
+    <div id="barThirst" class="bar">
+      <div class="fill" style="width:100%"></div>
+    </div>
+    <button id="btn-minigame" onclick="window.location.href='batalha.html'">
+      Ir para Minigame
+    </button>
+    <button id="btnMinigameRewards" style="margin-top: 8px;">
+      🎁 Recompensas
+    </button>
+
+  </div>
 
 
-  <div id="toolHUD" style="position:absolute; top:10px; right:10px; background:#222; color:#fff; padding:6px; border-radius:4px;">
+
+  <div id="toolHUD"
+    style="position:absolute; top:10px; right:10px; background:#222; color:#fff; padding:6px; border-radius:4px;">
     Ferramenta: Nenhuma
   </div>
 
-  <div id="armorHUD" style="position:absolute; top:40px; right:10px; background:#222; color:#fff; padding:6px; border-radius:4px;">
+  <div id="armorHUD"
+    style="position:absolute; top:40px; right:10px; background:#222; color:#fff; padding:6px; border-radius:4px;">
     Armadura: Nenhuma
   </div>
 
@@ -236,13 +375,13 @@ button,
 
 
   <!-- Joystick -->
-  <div id="joystick" style="position:absolute; bottom:40px; left:40px; width:100px; height:100px; background:#666; border-radius:50%; display:flex; justify-content:center; align-items:center;">
+  <div id="joystick"
+    style="position:absolute; bottom:40px; left:40px; width:100px; height:100px; background:#666; border-radius:50%; display:flex; justify-content:center; align-items:center;">
     <div id="stick" style="width:30px; height:30px; background:#222; border-radius:50%;"></div>
   </div>
-  
+
   <!-- Logo abaixo do joystick -->
-  <div id="dayNightTimer"
-     style="
+  <div id="dayNightTimer" style="
        position:absolute;
        top:80px;                         /* 50px do topo + raio 20px + 10px de folga */
        left:50%;
@@ -253,29 +392,28 @@ button,
        color:#fff;
        border-radius:4px;
      ">
-  00:00
-</div>
+    00:00
+  </div>
 
 
-  
-  
+
+
   <div id="chestPanel" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); 
   background:rgba(0,0,0,0.8); padding:20px; display:none;">
-<h4>Baú</h4>
-<button id="btnMerge">Juntar Itens</button>
-<div id="chestSlots" style="display:flex; flex-wrap:wrap; width: 6*56px;"></div>
-<button id="btnSwap">Trocar Item ⇄</button>
-<button id="btnCloseChest" style="margin-left:10px;">Fechar</button>
-<button id="btnUpgradeChest">Upgrade Baú</button>
-</div>
+    <h4>Baú</h4>
+    <button id="btnMerge">Juntar Itens</button>
+    <div id="chestSlots" style="display:flex; flex-wrap:wrap; width: 6*56px;"></div>
+    <button id="btnSwap">Trocar Item ⇄</button>
+    <button id="btnCloseChest" style="margin-left:10px;">Fechar</button>
+    <button id="btnUpgradeChest">Upgrade Baú</button>
+  </div>
 
-<button id="btnOpenChest" style="position:absolute; bottom:80px; right:10px; display:none;">
+  <button id="btnOpenChest" style="position:absolute; bottom:80px; right:10px; display:none;">
     Abrir Baú
   </button>
-  
-<!-- Botão Mod Menu (oculto até clicar 3x) -->
-<button id="btnModMenu" 
-        style="
+
+  <!-- Botão Mod Menu (oculto até clicar 3x) -->
+  <button id="btnModMenu" style="
           position:absolute;
           bottom:20px;
           right:20px;
@@ -291,9 +429,8 @@ button,
           z-index:1000;
         ">🌲</button>
 
-<!-- Painel Mod Menu (inicialmente oculto) -->
-<div id="modMenuPanel"
-     style="
+  <!-- Painel Mod Menu (inicialmente oculto) -->
+  <div id="modMenuPanel" style="
        position:absolute;
        bottom:70px;
        right:20px;
@@ -304,33 +441,34 @@ button,
        display:none;
        z-index:1000;
      ">
-  <h4>MOD MENU</h4>
-  <button class="modAdd" data-type="coconut">Add Coco</button><br>
-  <button class="modAdd" data-type="wood">Add Madeira</button><br>
-  <button class="modAdd" data-type="rockSmall">Add Pedra</button><br>
-  <button class="modAdd" data-type="leaf">Add Folha</button><br>
-  <button class="modAdd" data-type="fiber">Add Fibra</button><br>
-  <button class="modAdd" data-type="rope">Add Corda</button><br>
-  <button class="modAdd" data-type="axe">Add Machado</button><br>
-  <button class="modAdd" data-type="sword">Add Espada</button><br>
-  <button class="modAdd" data-type="fruit">Add Fruta</button><br>
-  <button class="modAdd" data-type="seeds">Add Semente</button><br>
-  <button class="modAdd" data-type="potion">Add Poção</button><br>
-  <button class="modAdd" data-type="sickle">Add Foice</button><br>
-  <button class="modAdd" data-type="zoomPotion">Add Poção de Zoom</button><br>
+    <h4>MOD MENU</h4>
+    <button class="modAdd" data-type="coconut">Add Coco</button><br>
+    <button class="modAdd" data-type="wood">Add Madeira</button><br>
+    <button class="modAdd" data-type="rockSmall">Add Pedra</button><br>
+    <button class="modAdd" data-type="leaf">Add Folha</button><br>
+    <button class="modAdd" data-type="fiber">Add Fibra</button><br>
+    <button class="modAdd" data-type="rope">Add Corda</button><br>
+    <button class="modAdd" data-type="axe">Add Machado</button><br>
+    <button class="modAdd" data-type="sword">Add Espada</button><br>
+    <button class="modAdd" data-type="fruit">Add Fruta</button><br>
+    <button class="modAdd" data-type="seeds">Add Semente</button><br>
+    <button class="modAdd" data-type="potion">Add Poção</button><br>
+    <button class="modAdd" data-type="sickle">Add Foice</button><br>
+    <button class="modAdd" data-type="zoomPotion">Add Poção de Zoom</button><br>
 
 
 
-  <!-- adicione mais botões aqui conforme novos tipos -->
-  <button id="btnCloseMod" style="margin-top:8px;">Fechar</button>
-</div>
+    <!-- adicione mais botões aqui conforme novos tipos -->
+    <button id="btnCloseMod" style="margin-top:8px;">Fechar</button>
+  </div>
 
-<!-- Barra de duração da Poção -->
-<div id="potionBarContainer" style="position:absolute; bottom:48px; left:50%; transform:translateX(-50%); width:220px; height:16px; background:#555; border:2px solid #333; display:none;">
-  <div id="potionBarFill" style="width:100%; height:100%; background:rgb(0,128,255);"></div>
-</div>
+  <!-- Barra de duração da Poção -->
+  <div id="potionBarContainer"
+    style="position:absolute; bottom:48px; left:50%; transform:translateX(-50%); width:220px; height:16px; background:#555; border:2px solid #333; display:none;">
+    <div id="potionBarFill" style="width:100%; height:100%; background:rgb(0,128,255);"></div>
+  </div>
 
-<div id="potionCooldown" style="
+  <div id="potionCooldown" style="
     position:absolute;
     top:130px;
     right:20px;
@@ -345,41 +483,44 @@ button,
 ">Cooldown: 05:00</div>
 
 
-<button id="btnOpenPlant" style="position:absolute; bottom:80px; right:50px; display:none;">
-  Abrir Usina
-</button>
-
-<div id="plantPanel" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.8); padding:20px; color:#fff; border-radius:6px; z-index:1000;">
-    <button id="btnHelpPlant" style="position:absolute; top:8px; left:8px; background:none; border:none; color:#fff; font-size:14px; cursor:pointer;">
-    Ajuda da Usina
+  <button id="btnOpenPlant" style="position:absolute; bottom:80px; right:50px; display:none;">
+    Abrir Usina
   </button>
 
-  <button id="btnClosePlant" style="position:absolute; top:8px; right:8px; background:none; border:none; color:#fff; font-size:18px; cursor:pointer;">
-    ✕
-  </button>
-  <h4 style="text-align:center; margin-bottom:16px;">Usina</h4>
+  <div id="plantPanel"
+    style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.8); padding:20px; color:#fff; border-radius:6px; z-index:1000;">
+    <button id="btnHelpPlant"
+      style="position:absolute; top:8px; left:8px; background:none; border:none; color:#fff; font-size:14px; cursor:pointer;">
+      Ajuda da Usina
+    </button>
 
-  <!-- Combustível embaixo com 🔥 -->
-  <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:12px;">
-    <span style="font-size:20px;">🔥</span>
-    <div class="slot" id="plantFuel" data-slot="fuel"></div>
-  </div>
+    <button id="btnClosePlant"
+      style="position:absolute; top:8px; right:8px; background:none; border:none; color:#fff; font-size:18px; cursor:pointer;">
+      ✕
+    </button>
+    <h4 style="text-align:center; margin-bottom:16px;">Usina</h4>
 
-  <!-- CraftIn → Output -->
-  <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:16px;">
-    <div class="slot" id="plantCraftIn" data-slot="craftIn"></div>
-    <div style="color:#fff; font-size:20px;">→</div>
-    <div class="slot" id="plantOutput" data-slot="output"></div>
-  </div>
+    <!-- Combustível embaixo com 🔥 -->
+    <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:12px;">
+      <span style="font-size:20px;">🔥</span>
+      <div class="slot" id="plantFuel" data-slot="fuel"></div>
+    </div>
 
-  <!-- Botões -->
-  <div style="display:flex; justify-content:center; gap:12px;">
-    <button id="btnSwapPlant">⇄ Trocar Item</button>
-    <button id="btnUpgradePlant" style="margin-top:12px;">🔄 Upgrade Remoto (1 poção)</button>
-  </div>
+    <!-- CraftIn → Output -->
+    <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:16px;">
+      <div class="slot" id="plantCraftIn" data-slot="craftIn"></div>
+      <div style="color:#fff; font-size:20px;">→</div>
+      <div class="slot" id="plantOutput" data-slot="output"></div>
+    </div>
+
+    <!-- Botões -->
+    <div style="display:flex; justify-content:center; gap:12px;">
+      <button id="btnSwapPlant">⇄ Trocar Item</button>
+      <button id="btnUpgradePlant" style="margin-top:12px;">🔄 Upgrade Remoto (1 poção)</button>
+    </div>
 
     <!-- Barra de progresso -->
-  <div id="plantProgressContainer" style="
+    <div id="plantProgressContainer" style="
       width: 100%;
       height: 12px;
       background: #333;
@@ -389,2558 +530,2662 @@ button,
       overflow: hidden;
       display: none;        /* só aparece quando estiver processando */
     ">
-    <div id="plantProgressFill" style="
+      <div id="plantProgressFill" style="
         width: 0%;
         height: 100%;
         background: #00f;  /* azul */
         transition: width 0.1s linear;
       "></div>
+    </div>
+
   </div>
 
-</div>
-
-<button id="btnParrotToggleFollow"
-        style="position:absolute; bottom:190px; left:10px; display:none;">
-  Parar de Seguir Papagaio
-</button>
-
-<button id="btnDomesticate"
-        style="position:absolute; bottom:60px; right:10px; display:none;">
-  Domesticar Papagaio
-</button>
-<button id="btnParrotInteract"
-        style="position:absolute; bottom:60px; right:10px; display:none;">
-  Interagir
-</button>
-  
-<script>
-// --- Setup Básico ---
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-let W = canvas.width = window.innerWidth;
-let H = canvas.height = window.innerHeight;
-let keys = {};
-window.addEventListener('keydown', e => keys[e.key] = true);
-window.addEventListener('keyup', e => keys[e.key] = false);
-
-window.addEventListener('resize', ()=>{ W=canvas.width=innerWidth; H=canvas.height=innerHeight; });
-
-const FPS = 60; // ou o valor real do seu requestAnimationFrame
-const CRAFT_DURATION_SEC = 30;
-const craftTicks = CRAFT_DURATION_SEC * FPS;  // 30s × 60fps = 1800 frames
-
-let dayDuration   = 10 * 60 * 1000;  // 10 minutos
-let nightDuration =  3 * 60 * 1000;  //  3 minutos
-let timeOfCycle   = 0;                // ms desde início do dia/noite
-let isDay         = true;
-
-// Global
-let parrotFollowEnabled = true;
-
-const btnConsume = document.getElementById('btnConsume');
-btnConsume.onclick = consume;
-
-// ─── FUNÇÕES DO REWARD ───
-function createRewardButton() {
-  if (document.getElementById('btnReward')) return;
-  const btn = document.createElement('button');
-  btn.id = 'btnReward';
-  btn.innerText = 'REWARD';
-  Object.assign(btn.style, {
-    position:   'absolute',
-    bottom:     '20px',
-    right:      '80px',
-    padding:    '10px 14px',
-    fontSize:   '16px',
-    background: '#ff0',
-    color:      '#000',
-    border:     '2px solid #333',
-    borderRadius: '6px',
-    zIndex:     1000,
-    display:    'none'
-  });
-  // DEBUG: Conferir que a função é anexada
-  btn.addEventListener('click', () => {
-    console.log('REWARD clicked!'); 
-    claimSeeds();
-  });
-  document.body.appendChild(btn);
-}
-
-const btnParrotToggleFollow = document.getElementById('btnParrotToggleFollow');
-  
-function showRewardButton() {
-  const pending = Number(sessionStorage.getItem('pendingSeeds')) || 0;
-  const btn = document.getElementById('btnReward');
-  if (btn) {
-    btn.style.display = pending > 0 ? 'block' : 'none';
-    console.log('showRewardButton:', pending, btn.style.display);
-  }
-}
-
-function claimSeeds() {
-  console.log('📦 claimSeeds() executado');
-  const btn = document.getElementById('btnReward');
-  btn.disabled = true;
-
-  const pending = Number(sessionStorage.getItem('pendingSeeds')) || 0;
-  if (pending <= 0) return;
-
-  giveItem('seeds', pending);
-  alert(`🎉 Você recebeu ${pending} semente(s) pendente(s)!`);
-  sessionStorage.setItem('pendingSeeds', 0);
-  showRewardButton();
-  updateHUD();
-
-  // reabilita botão (caso queira reaproveitar) — ou ele some com showRewardButton
-  btn.disabled = false;
-}
-
-
-function hasFreeSlot(itemType) {
-  const usedSlots = player.inventory.length;
-  const maxSlots = player.invSize;
-
-  console.log(`🔎 hasFreeSlot('${itemType}') → usados: ${usedSlots}/${maxSlots}`);
-
-  // 1) Se houver slot vazio disponível
-  if (usedSlots < maxSlots) {
-    console.log('✅ Slot vazio disponível');
-    return true;
-  }
-
-  // 2) Tenta empilhar no mesmo tipo
-  for (let slot of player.inventory) {
-    const maxStack = 99; // ou use slot.maxStack se existir
-    if (slot.type === itemType && slot.count < maxStack) {
-      console.log(`✅ Slot de ${itemType} com espaço (atual: ${slot.count})`);
-      return true;
-    }
-  }
-
-  console.log('❌ Sem espaço: inventário cheio e não dá pra empilhar');
-  return false;
-}
-
-
-
-
-window.addEventListener('DOMContentLoaded', () => {
-  // ─── BÔNUS DE COCO EM TELAS PEQUENAS ───
-  if (window.innerWidth <= 918 && window.innerHeight <= 452) {
-    // dá 3 cocos
-    giveItem('coconut', 3);
-    updateHUD();
-    alert('🎁 Bônus: Você ganhou 3 cocos grátis por jogar em tela pequena!');
-  }
-
-    if (sessionStorage.getItem('avisado') !== 'true') {
-    alert('🛶 Para vencer o jogo, crafite o raft!');
-    sessionStorage.setItem('avisado', 'true');
-  }
-
-    spawnMagicParrot();
-
-  const stick = document.getElementById('stick');
-  stick.style.transform = 'translate(-15px, -15px)';
-
-  const unlocked = localStorage.getItem('craftraft') === 'true';
-  document.getElementById('btnModMenu').style.display = unlocked ? 'block' : 'none';
-
-  // ─── TIMER VISUAL DIA/NOITE ───
-  const CYCLE_MS = dayDuration + nightDuration;
-  function updateDayNightTimer() {
-    const duration = isDay ? dayDuration : nightDuration;
-    const remaining = duration - timeOfCycle;
-    const secs = Math.ceil(remaining / 1000);
-    const m = String(Math.floor(secs / 60)).padStart(2, '0');
-    const s = String(secs % 60).padStart(2, '0');
-    const el = document.getElementById('dayNightTimer');
-    el.textContent = `${m}:${s}`;
-    el.style.color = isDay
-      ? 'rgb(0,0,255)'
-      : 'rgb(255,255,0)';
-  }
-  updateDayNightTimer();
-  setInterval(updateDayNightTimer, 1000);
-
-    // 1) Garante que o botão existe no DOM
-  createRewardButton();
-
-  // 2) Se já houver pendingSeeds > 0, exibe o botão
-  showRewardButton();
-
-});
-
-
-
-const lions = [];
-let lastDamageTime = Date.now();
-let zoomFactor = 1;
-const baseReach = 60;
-let reachMultiplier = 1;   // o buff vai setar para 2
-let reach = baseReach;
-const btnOpenPlant = document.getElementById('btnOpenPlant');
-const plantPanel   = document.getElementById('plantPanel');
-
-// --- Recursos de Imagem ---
-const imgs = {};
-const loadImg = (key,url)=>{ let i=new Image(); i.src=url; imgs[key]=i; };
-loadImg('tree','https://png.pngtree.com/png-clipart/20230302/ourmid/pngtree-palm-tree-top-view-for-3d-render-free-transparent-vector-png-image_6625616.png');
-loadImg('rockBig','https://static.vecteezy.com/system/resources/thumbnails/022/025/119/small_2x/gray-stone-isolated-on-a-transparent-background-png.png');
-loadImg('rockSmall','https://png.pngtree.com/png-clipart/20241005/original/pngtree-small-rock-on-transparent-background-png-image_16210410.png');
-loadImg('stick','https://acdn-us.mitiendanube.com/stores/002/868/020/products/ad-mt-158961-9a2e45b33ef8c4a73116897890253038-1024-1024.png');
-loadImg('axeIcon','https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b4849013-6200-4bb8-b79c-7fa5df401629/ddf2086-ea19b850-0017-4abe-a094-e030d156bc20.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcL2I0ODQ5MDEzLTYyMDAtNGJiOC1iNzljLTdmYTVkZjQwMTYyOVwvZGRmMjA4Ni1lYTE5Yjg1MC0wMDE3LTRhYmUtYTA5NC1lMDMwZDE1NmJjMjAucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.wa-nBsz6TwV7n504-48iv3dbrjzfFURktrcALagonck');
-// Cria o alias 'axe' apontando para a mesma imagem de 'axeIcon'
-imgs['axe'] = imgs['axeIcon'];
-
-loadImg('bush','https://static.vecteezy.com/system/resources/thumbnails/047/392/132/small/hand-drawn-pixelated-bush-cartoon-illustration-png.png');
-loadImg('coconut', 'https://opengameart.org/sites/default/files/coconut.png');
-loadImg('fruit', 'https://static.vecteezy.com/system/resources/previews/028/044/445/non_2x/blueberry-pixel-art-png.png');
-loadImg('fiber', 'https://png.pngtree.com/png-clipart/20231102/original/pngtree-japanese-fibre-banana-or-musa-basjoo-fibre-photo-png-image_13482749.png');
-loadImg('rope', 'https://png.pngtree.com/png-vector/20230816/ourmid/pngtree-nautical-knot-vector-illustration-clipart-png-image_6979834.png');
-loadImg('wood', 'https://static.vecteezy.com/ti/vecteur-libre/p1/35662094-pixel-art-illustration-tas-de-bois-pixelise-charpente-bois-bois-pile-pixelise-pour-le-pixel-art-jeu-et-icone-pour-site-internet-et-video-jeu-vieux-ecole-retro-vectoriel.jpg');
-loadImg('leaf', 'https://png.pngtree.com/png-clipart/20220510/original/pngtree-green-leaves-decoration-pixel-art-png-image_7694573.png');
-loadImg('chest', 'https://static.vecteezy.com/system/resources/thumbnails/022/913/766/small_2x/game-equipment-chest-illustration-3d-png.png');
-loadImg('swordIcon', 'https://art.pixilart.com/cc3ccb1616cad63.png');
-imgs['sword'] = imgs['swordIcon'];  // alias para item.type = 'sword'
-loadImg('potion', 'https://images.squarespace-cdn.com/content/v1/647662b39c94f3471456d1f4/b88b7955-fc23-45d7-8a3e-f2da12168ea0/mana.png?format=500w');  // substitua pelo link direto ao .png
-
-
-loadImg('lion', 'https://steemitimages.com/DQmWcY3wUoQZ2CBV3RohFgzhYXyVeojeFcZVgYgiVS49b3K/New%20Piskel(1).png');
-// --- Nova imagem de seeds ---
-loadImg('seeds', 'https://images.vexels.com/media/users/3/248723/isolated/preview/6568e99363c75c5dcd0dae06d1e7cc09-brown-seeds-color-stroke.png');
-imgs.sapling = imgs.seeds;
-imgs.manualtree = imgs.tree;
-// --- Imagem da jangada ---
-loadImg('raft', 'https://img.itch.zone/aW1nLzMyNTM4NzMucG5n/315x250%23c/j64jBk.png');
-
-// pré‑carrega a Armadura de Madeira
-loadImg('woodArmor', 'https://www.medievalware.com/wp-content/uploads/2021/04/viking-leather-armor-2.png');
-
-// pré‑carrega a Foice
-loadImg('sickle', 'https://bokkein-rpg.weebly.com/uploads/1/3/8/2/13826656/__1426893414.png');
-loadImg('plant', 'https://img.freepik.com/premium-vector/pixel-art-factory-building-with-smoke-from-chimneys_1292377-12397.jpg');
-loadImg('magicparrot','https://png.pngtree.com/png-clipart/20240819/original/pngtree-parrot-face-png-image_15805579.png');
-loadImg('zoomPotion', 'https://static.vecteezy.com/system/resources/thumbnails/059/140/810/small_2x/wonderful-artistic-a-single-potion-bottle-bubbling-green-liquid-cork-stopper-high-quality-png.png');
-
-const progContainer = document.getElementById('plantProgressContainer');
-const progFill      = document.getElementById('plantProgressFill');
-
-
-let dropMultipliers = {
-  coconut:   1,
-  wood:      1,
-  leaf:      1,
-  seeds:     1,
-  fruit:     1,
-  rockSmall: 1
-};
-
-const SICKLE = {
-  id:          'sickle',
-  type:        'tool',
-  name:        'Foice',
-  img:         'https://bokkein-rpg.weebly.com/uploads/1/3/8/2/13826656/__1426893414.png',
-  cost:        { wood: 12, rockSmall: 20 },
-  durability:  20,
-  damage:      35,    // mesmo dano do machado
-  reachBonus:  40,    // mesmo alcance extra do machado
-  onUse: (player, target) => {
-    if (target.type === 'bush') {
-      // base de 4–8 folhas
-      const base = Math.floor(Math.random() * (8 - 4 + 1)) + 4;
-      // se a poção estiver ativa, dropMultipliers.leaf será 2
-      return base * dropMultipliers.leaf;
-    }
-    return null;
-  }
-};
-
-
-
-const swordStats = {
-  damage: 80,
-  reachMultiplier: 2.5,  // 250% do alcance base
-  cost: { wood: 15, rockSmall: 12 }
-};
-
-const raftCost = {
-  wood: 99 * 2,    // 2 slots de 99 madeiras = 198
-  rockSmall: 20,
-  rope: 50,
-  fiber: 40
-};
-
-document.getElementById('btnHelp').onclick = () => {
-    alert(
-    'Custos de Craft:\n\n' +
-    '- Machado de Pedra: 10 madeiras e 5 pedras\n' +
-    '- Espada de Pedra: 15 madeiras e 12 pedras\n' +
-    '- Fibra: 6 folhas\n' +
-    '- Corda: 3 fibras\n' +
-    '- Mochila (nível 0): 20 cordas e 10 madeiras\n' +
-    '- Upgrade de Mochila:\n' +
-    '   • Nível 1: 10 madeiras\n' +
-    '   • Nível 2: 30 madeiras\n' +
-    '   • Nível 3: 60 madeiras\n' +
-    '   • Nível 4: 99 madeiras e 3 cordas\n' +
-    '- Baú: 10 madeiras, 25 pedras e 3 folhas\n' +
-    `- Jangada: ${raftCost.wood} madeiras, ${raftCost.rockSmall} pedras, ${raftCost.rope} cordas e ${raftCost.fiber} fibras\n` +
-    '- Foice de Pedra: 12 madeiras e 20 pedra\n' +                            // **novo**  
-    '- Usina: 30 madeiras, 30 pedras e 1 poção e 4 cordas'                 // **novo**
-  );
-};
-
-document.getElementById('btnHelpPlant').addEventListener('click', () => {
-  alert(
-    '🛠️ Como funciona a Usina:\n\n' +
-    '➡️ Slot esquerdo da seta: insira 3 folhas (→ 1 corda) ou 1 fibra (→ 2 cordas)\n' +
-    '🔥 Slot com emoji de fogo (embaixo): coloque combustível (folha ou madeira)\n' +
-    '➡️ Slot direito da seta (Output): é onde as cordas produzidas vão aparecer\n\n' +
-    '⏳ Duração do combustível:\n' +
-    '- 1 folha = 5 segundos\n' +
-    '- 1 madeira = 60 segundos\n\n' +
-    '⚠️ Aviso importante:\n' +
-    '❌ Inserir itens inválidos nos slots pode causar falhas ou perda de itens!\n' +
-    '✔️ Use APENAS folhas ou madeira no slot de combustível\n' +
-    '✔️ Use APENAS folhas ou fibra no slot de crafting\n' +
-    '⚠️ NÃO coloque nada no slot de Output — ele é apenas para receber cordas.'
-  );
-});
-
-
-// --- Mundo ---
-const islandRadius = 2000;
-const objects = [];
-const HP_FIVE_HITS = 5 * 35;  // 175 HP
-
-// Spawn inicial de tudo de uma vez:
-for (let i = 0; i < 5; i++) {
-  spawnOnLand('tree',    HP_FIVE_HITS);
-  spawnOnLand('rockBig', HP_FIVE_HITS);
-}
-for (let i = 0; i < 20; i++) {
-  spawnOnLand('rockSmall', 1);
-  spawnOnLand('stick',     1);
-}
-for (let i = 0; i < 10; i++) {
-  spawnOnLand('bush', 1);
-}
-function rand(){ return Math.random()*islandRadius*2-islandRadius; }
-
-// --- Player e Status ---
-const player = {
-  x:0,y:0,size:20,
-  inventory:[], invSize:4, selected:0,
-  armor: null, armorDur: 0,
-  tool:null, toolDur:0,
-  health:100, hunger:100, thirst:100
-};
-// Inventário e níveis de mochila
-player.invSize       = 4;   // sem mochila → 4 slots
-player.backpackLevel = -1;  // -1 = sem mochila; 0..4 = níveis de mochila
-player.moveSpeed = 2;
-
-let magicParrot = null;
-let parrotReward = null;      // { type:'leaf'|'fiber'|'fruit'|'potion'|'seeds'|'plant', qty }
-let parrotState = 'wild';     // 'wild' ou 'domestic'
-let parrotFollowSpeed = player.moveSpeed;
-let parrotCircle = null;      // animação de círculo branco
-
-// ─── Função de spawn (único) ───
-function spawnMagicParrot() {
-  if (magicParrot) return;  // só uma instância
-  let x, y;
-  do {
-    x = Math.random() * islandRadius * 2 - islandRadius;
-    y = Math.random() * islandRadius * 2 - islandRadius;
-  } while (Math.hypot(x, y) > islandRadius);
-  magicParrot = { type: 'magicparrot', x, y };
-  objects.push(magicParrot);
-}
-
-
-
-// Custos de upgrade de cada nível (de X → X+1)
-const backpackCosts = {
-  0: { wood: 0,   rope: 0 },   // nível -1→0 (criação da mochila nível 0 via craftPack)
-  1: { wood: 10   },           // 6→7 slots
-  2: { wood: 30   },           // 7→8 slots
-  3: { wood: 60   },           // 8→9 slots
-  4: { wood: 99, rope: 3 }     // 9→10 slots
-};
-const maxBackpackLevel = 4;
-const bars = {
-  health: document.querySelector('#barHealth .fill'),
-  hunger: document.querySelector('#barHunger .fill'),
-  thirst: document.querySelector('#barThirst .fill')
-};
-function updateBars(){
-  bars.health.style.width = player.health+'%';
-  bars.hunger.style.width = player.hunger+'%';
-  bars.thirst.style.width = player.thirst+'%';
-}
-updateBars();
-
-const WOOD_ARMOR = {
-  id:          'woodArmor',
-  type:        'armor',
-  name:        'Armadura de Madeira',
-  img:         'https://www.medievalware.com/wp-content/uploads/2021/04/viking-leather-armor-2.png',
-  cost:        { fiber: 4, wood: 20 },
-  durability:  30,
-  permanent:   true,
-  onEquip: player => {
-    player.armor       = WOOD_ARMOR.id;
-    player.armorDur    = WOOD_ARMOR.durability;    // ← adiciona
-    player.armorDurMax = WOOD_ARMOR.durability;    // ← adiciona
-    updateArmorHUD();
-    player.damageReduction = (player.damageReduction || 0) + 0.60;
-    player.moveSpeed       *= 1.20;
-  }
-};
-
-
-// --- HUD ---
-const hud = document.getElementById('hud');
-function updateHUD(){
-  hud.innerHTML='';
-  for(let i=0;i<player.invSize;i++){
-    let slot = document.createElement('div');
-    slot.className = 'slot' + (i===player.selected?' selected':'');
-    let item = player.inventory[i];
-    if(item){
-      let img = document.createElement('img');
-      img.src = imgs[item.type].src;
-      slot.appendChild(img);
-      let count = document.createElement('span');
-      count.textContent = item.count;
-      count.style.position='absolute';
-      count.style.bottom='0'; count.style.right='0';
-      count.style.background='rgba(0,0,0,0.5)'; count.style.color='#fff';
-      slot.appendChild(count);
-    }
-    slot.addEventListener('click', ()=>{ player.selected=i; updateHUD(); });
-    hud.appendChild(slot);
-  }
-  updateToolHUD();
-  const sel = player.inventory[player.selected];
-  btnConsume.disabled = !(sel && (sel.type==='fruit' || sel.type==='coconut' || sel.type === 'potion' || sel.type === 'zoomPotion'));
-}
-updateHUD();
-
-function totalCount(type) {
-  return player.inventory
-    .filter(i => i && i.type === type)
-    .reduce((sum, i) => sum + i.count, 0);
-}
-
-document.getElementById('craftRaft').onclick = () => {
-  const haveWood  = totalCount('wood');
-  const haveRock  = totalCount('rockSmall');
-  const haveRope  = totalCount('rope');
-  const haveFiber = totalCount('fiber');
-
-  if (
-       haveWood  >= raftCost.wood
-    && haveRock  >= raftCost.rockSmall
-    && haveRope  >= raftCost.rope
-    && haveFiber >= raftCost.fiber
-  ) {
-    removeItem('wood',      raftCost.wood);
-    removeItem('rockSmall', raftCost.rockSmall);
-    removeItem('rope',      raftCost.rope);
-    removeItem('fiber',     raftCost.fiber);
-
-    // CHECAGEM DE DISTÂNCIA
-    const dist = Math.hypot(player.x, player.y);
-    console.log(`DEBUG: player.x=${player.x.toFixed(1)}, y=${player.y.toFixed(1)}, dist=${dist.toFixed(1)}`);
-
-    if (dist >= 1900) {
-      objects.push({ type: 'raft', x: player.x, y: player.y });
-      // Mostra overlay de vitória com os dois botões
-      const endDiv = document.createElement('div');
-      Object.assign(endDiv.style, {
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      background: 'rgba(0,0,0,0.85)',
-      color: '#fff',
-      padding: '30px',
-      textAlign: 'center',
-      borderRadius: '8px',
-      zIndex: 2000
+  <button id="btnParrotToggleFollow" style="position:absolute; bottom:190px; left:10px; display:none;">
+    Parar de Seguir Papagaio
+  </button>
+
+  <button id="btnDomesticate" style="position:absolute; bottom:60px; right:10px; display:none;">
+    Domesticar Papagaio
+  </button>
+  <button id="btnParrotInteract" style="position:absolute; bottom:60px; right:10px; display:none;">
+    Interagir
+  </button>
+
+  <script>
+    // --- Setup Básico ---
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    let W = canvas.width = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    let keys = {};
+    window.addEventListener('keydown', e => keys[e.key] = true);
+    window.addEventListener('keyup', e => keys[e.key] = false);
+
+    window.addEventListener('resize', () => { W = canvas.width = innerWidth; H = canvas.height = innerHeight; });
+
+    const FPS = 60; // ou o valor real do seu requestAnimationFrame
+    const CRAFT_DURATION_SEC = 30;
+    const craftTicks = CRAFT_DURATION_SEC * FPS;  // 30s × 60fps = 1800 frames
+
+    let dayDuration = 10 * 60 * 1000;  // 10 minutos
+    let nightDuration = 3 * 60 * 1000;  //  3 minutos
+    let timeOfCycle = 0;                // ms desde início do dia/noite
+    let isDay = true;
+
+    // Global
+    let parrotFollowEnabled = true;
+
+    const btnConsume = document.getElementById('btnConsume');
+    btnConsume.onclick = consume;
+
+    // ─── FUNÇÕES DO REWARD ───
+    function createRewardButton() {
+      if (document.getElementById('btnReward')) return;
+      const btn = document.createElement('button');
+      btn.id = 'btnReward';
+      btn.innerText = 'REWARD';
+      Object.assign(btn.style, {
+        position: 'absolute',
+        bottom: '20px',
+        right: '80px',
+        padding: '10px 14px',
+        fontSize: '16px',
+        background: '#ff0',
+        color: '#000',
+        border: '2px solid #333',
+        borderRadius: '6px',
+        zIndex: 1000,
+        display: 'none'
       });
-      endDiv.innerHTML = `
+      // DEBUG: Conferir que a função é anexada
+      btn.addEventListener('click', () => {
+        console.log('REWARD clicked!');
+        claimSeeds();
+      });
+      document.body.appendChild(btn);
+    }
+
+    const btnParrotToggleFollow = document.getElementById('btnParrotToggleFollow');
+
+    function showRewardButton() {
+      const pending = Number(sessionStorage.getItem('pendingSeeds')) || 0;
+      const btn = document.getElementById('btnReward');
+      if (btn) {
+        btn.style.display = pending > 0 ? 'block' : 'none';
+        console.log('showRewardButton:', pending, btn.style.display);
+      }
+    }
+
+    function claimSeeds() {
+      console.log('📦 claimSeeds() executado');
+      const btn = document.getElementById('btnReward');
+      btn.disabled = true;
+
+      const pending = Number(sessionStorage.getItem('pendingSeeds')) || 0;
+      if (pending <= 0) return;
+
+      giveItem('seeds', pending);
+      alert(`🎉 Você recebeu ${pending} semente(s) pendente(s)!`);
+      sessionStorage.setItem('pendingSeeds', 0);
+      showRewardButton();
+      updateHUD();
+
+      // reabilita botão (caso queira reaproveitar) — ou ele some com showRewardButton
+      btn.disabled = false;
+    }
+
+
+    function hasFreeSlot(itemType) {
+      const usedSlots = player.inventory.length;
+      const maxSlots = player.invSize;
+
+      console.log(`🔎 hasFreeSlot('${itemType}') → usados: ${usedSlots}/${maxSlots}`);
+
+      // 1) Se houver slot vazio disponível
+      if (usedSlots < maxSlots) {
+        console.log('✅ Slot vazio disponível');
+        return true;
+      }
+
+      // 2) Tenta empilhar no mesmo tipo
+      for (let slot of player.inventory) {
+        const maxStack = 99; // ou use slot.maxStack se existir
+        if (slot.type === itemType && slot.count < maxStack) {
+          console.log(`✅ Slot de ${itemType} com espaço (atual: ${slot.count})`);
+          return true;
+        }
+      }
+
+      console.log('❌ Sem espaço: inventário cheio e não dá pra empilhar');
+      return false;
+    }
+
+
+
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // ─── BÔNUS DE COCO EM TELAS PEQUENAS ───
+      if (window.innerWidth <= 918 && window.innerHeight <= 452) {
+        // dá 3 cocos
+        giveItem('coconut', 3);
+        updateHUD();
+        alert('🎁 Bônus: Você ganhou 3 cocos grátis por jogar em tela pequena!');
+      }
+
+      if (sessionStorage.getItem('avisado') !== 'true') {
+        alert('🛶 Para vencer o jogo, crafite o raft!');
+        sessionStorage.setItem('avisado', 'true');
+      }
+
+      spawnMagicParrot();
+
+      const stick = document.getElementById('stick');
+      stick.style.transform = 'translate(-15px, -15px)';
+
+      const unlocked = localStorage.getItem('craftraft') === 'true';
+      document.getElementById('btnModMenu').style.display = unlocked ? 'block' : 'none';
+
+      // ─── TIMER VISUAL DIA/NOITE ───
+      const CYCLE_MS = dayDuration + nightDuration;
+      function updateDayNightTimer() {
+        const duration = isDay ? dayDuration : nightDuration;
+        const remaining = duration - timeOfCycle;
+        const secs = Math.ceil(remaining / 1000);
+        const m = String(Math.floor(secs / 60)).padStart(2, '0');
+        const s = String(secs % 60).padStart(2, '0');
+        const el = document.getElementById('dayNightTimer');
+        el.textContent = `${m}:${s}`;
+        el.style.color = isDay
+          ? 'rgb(0,0,255)'
+          : 'rgb(255,255,0)';
+      }
+      updateDayNightTimer();
+      setInterval(updateDayNightTimer, 1000);
+
+      // 1) Garante que o botão existe no DOM
+      createRewardButton();
+
+      // 2) Se já houver pendingSeeds > 0, exibe o botão
+      showRewardButton();
+
+      // no final do DOMContentLoaded:
+      showBattleRewards();
+
+    });
+
+
+
+    const lions = [];
+    let lastDamageTime = Date.now();
+    let zoomFactor = 1;
+    const baseReach = 60;
+    let reachMultiplier = 1;   // o buff vai setar para 2
+    let reach = baseReach;
+    const btnOpenPlant = document.getElementById('btnOpenPlant');
+    const plantPanel = document.getElementById('plantPanel');
+
+    // --- Recursos de Imagem ---
+    const imgs = {};
+    const loadImg = (key, url) => { let i = new Image(); i.src = url; imgs[key] = i; };
+    loadImg('tree', 'https://png.pngtree.com/png-clipart/20230302/ourmid/pngtree-palm-tree-top-view-for-3d-render-free-transparent-vector-png-image_6625616.png');
+    loadImg('rockBig', 'https://static.vecteezy.com/system/resources/thumbnails/022/025/119/small_2x/gray-stone-isolated-on-a-transparent-background-png.png');
+    loadImg('rockSmall', 'https://png.pngtree.com/png-clipart/20241005/original/pngtree-small-rock-on-transparent-background-png-image_16210410.png');
+    loadImg('stick', 'https://acdn-us.mitiendanube.com/stores/002/868/020/products/ad-mt-158961-9a2e45b33ef8c4a73116897890253038-1024-1024.png');
+    loadImg('axeIcon', 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/b4849013-6200-4bb8-b79c-7fa5df401629/ddf2086-ea19b850-0017-4abe-a094-e030d156bc20.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcL2I0ODQ5MDEzLTYyMDAtNGJiOC1iNzljLTdmYTVkZjQwMTYyOVwvZGRmMjA4Ni1lYTE5Yjg1MC0wMDE3LTRhYmUtYTA5NC1lMDMwZDE1NmJjMjAucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.wa-nBsz6TwV7n504-48iv3dbrjzfFURktrcALagonck');
+    // Cria o alias 'axe' apontando para a mesma imagem de 'axeIcon'
+    imgs['axe'] = imgs['axeIcon'];
+
+    loadImg('bush', 'https://static.vecteezy.com/system/resources/thumbnails/047/392/132/small/hand-drawn-pixelated-bush-cartoon-illustration-png.png');
+    loadImg('coconut', 'https://opengameart.org/sites/default/files/coconut.png');
+    loadImg('fruit', 'https://static.vecteezy.com/system/resources/previews/028/044/445/non_2x/blueberry-pixel-art-png.png');
+    loadImg('fiber', 'https://png.pngtree.com/png-clipart/20231102/original/pngtree-japanese-fibre-banana-or-musa-basjoo-fibre-photo-png-image_13482749.png');
+    loadImg('rope', 'https://png.pngtree.com/png-vector/20230816/ourmid/pngtree-nautical-knot-vector-illustration-clipart-png-image_6979834.png');
+    loadImg('wood', 'https://static.vecteezy.com/ti/vecteur-libre/p1/35662094-pixel-art-illustration-tas-de-bois-pixelise-charpente-bois-bois-pile-pixelise-pour-le-pixel-art-jeu-et-icone-pour-site-internet-et-video-jeu-vieux-ecole-retro-vectoriel.jpg');
+    loadImg('leaf', 'https://png.pngtree.com/png-clipart/20220510/original/pngtree-green-leaves-decoration-pixel-art-png-image_7694573.png');
+    loadImg('chest', 'https://static.vecteezy.com/system/resources/thumbnails/022/913/766/small_2x/game-equipment-chest-illustration-3d-png.png');
+    loadImg('swordIcon', 'https://art.pixilart.com/cc3ccb1616cad63.png');
+    imgs['sword'] = imgs['swordIcon'];  // alias para item.type = 'sword'
+    loadImg('potion', 'https://images.squarespace-cdn.com/content/v1/647662b39c94f3471456d1f4/b88b7955-fc23-45d7-8a3e-f2da12168ea0/mana.png?format=500w');  // substitua pelo link direto ao .png
+
+
+    loadImg('lion', 'https://steemitimages.com/DQmWcY3wUoQZ2CBV3RohFgzhYXyVeojeFcZVgYgiVS49b3K/New%20Piskel(1).png');
+    // --- Nova imagem de seeds ---
+    loadImg('seeds', 'https://images.vexels.com/media/users/3/248723/isolated/preview/6568e99363c75c5dcd0dae06d1e7cc09-brown-seeds-color-stroke.png');
+    imgs.sapling = imgs.seeds;
+    imgs.manualtree = imgs.tree;
+    // --- Imagem da jangada ---
+    loadImg('raft', 'https://img.itch.zone/aW1nLzMyNTM4NzMucG5n/315x250%23c/j64jBk.png');
+
+    // pré‑carrega a Armadura de Madeira
+    loadImg('woodArmor', 'https://www.medievalware.com/wp-content/uploads/2021/04/viking-leather-armor-2.png');
+
+    // pré‑carrega a Foice
+    loadImg('sickle', 'https://bokkein-rpg.weebly.com/uploads/1/3/8/2/13826656/__1426893414.png');
+    loadImg('plant', 'https://img.freepik.com/premium-vector/pixel-art-factory-building-with-smoke-from-chimneys_1292377-12397.jpg');
+    loadImg('magicparrot', 'https://png.pngtree.com/png-clipart/20240819/original/pngtree-parrot-face-png-image_15805579.png');
+    loadImg('zoomPotion', 'https://static.vecteezy.com/system/resources/thumbnails/059/140/810/small_2x/wonderful-artistic-a-single-potion-bottle-bubbling-green-liquid-cork-stopper-high-quality-png.png');
+
+    const progContainer = document.getElementById('plantProgressContainer');
+    const progFill = document.getElementById('plantProgressFill');
+
+
+    let dropMultipliers = {
+      coconut: 1,
+      wood: 1,
+      leaf: 1,
+      seeds: 1,
+      fruit: 1,
+      rockSmall: 1
+    };
+
+    const SICKLE = {
+      id: 'sickle',
+      type: 'tool',
+      name: 'Foice',
+      img: 'https://bokkein-rpg.weebly.com/uploads/1/3/8/2/13826656/__1426893414.png',
+      cost: { wood: 12, rockSmall: 20 },
+      durability: 20,
+      damage: 35,    // mesmo dano do machado
+      reachBonus: 40,    // mesmo alcance extra do machado
+      onUse: (player, target) => {
+        if (target.type === 'bush') {
+          // base de 4–8 folhas
+          const base = Math.floor(Math.random() * (8 - 4 + 1)) + 4;
+          // se a poção estiver ativa, dropMultipliers.leaf será 2
+          return base * dropMultipliers.leaf;
+        }
+        return null;
+      }
+    };
+
+
+
+    const swordStats = {
+      damage: 80,
+      reachMultiplier: 2.5,  // 250% do alcance base
+      cost: { wood: 15, rockSmall: 12 }
+    };
+
+    const raftCost = {
+      wood: 99 * 2,    // 2 slots de 99 madeiras = 198
+      rockSmall: 20,
+      rope: 50,
+      fiber: 40
+    };
+
+    document.getElementById('btnHelp').onclick = () => {
+      alert(
+        'Custos de Craft:\n\n' +
+        '- Machado de Pedra: 10 madeiras e 5 pedras\n' +
+        '- Espada de Pedra: 15 madeiras e 12 pedras\n' +
+        '- Fibra: 6 folhas\n' +
+        '- Corda: 3 fibras\n' +
+        '- Mochila (nível 0): 20 cordas e 10 madeiras\n' +
+        '- Upgrade de Mochila:\n' +
+        '   • Nível 1: 10 madeiras\n' +
+        '   • Nível 2: 30 madeiras\n' +
+        '   • Nível 3: 60 madeiras\n' +
+        '   • Nível 4: 99 madeiras e 3 cordas\n' +
+        '- Baú: 10 madeiras, 25 pedras e 3 folhas\n' +
+        `- Jangada: ${raftCost.wood} madeiras, ${raftCost.rockSmall} pedras, ${raftCost.rope} cordas e ${raftCost.fiber} fibras\n` +
+        '- Foice de Pedra: 12 madeiras e 20 pedra\n' +                            // **novo**  
+        '- Usina: 30 madeiras, 30 pedras e 1 poção e 4 cordas'                 // **novo**
+      );
+    };
+
+    document.getElementById('btnHelpPlant').addEventListener('click', () => {
+      alert(
+        '🛠️ Como funciona a Usina:\n\n' +
+        '➡️ Slot esquerdo da seta: insira 3 folhas (→ 1 corda) ou 1 fibra (→ 2 cordas)\n' +
+        '🔥 Slot com emoji de fogo (embaixo): coloque combustível (folha ou madeira)\n' +
+        '➡️ Slot direito da seta (Output): é onde as cordas produzidas vão aparecer\n\n' +
+        '⏳ Duração do combustível:\n' +
+        '- 1 folha = 5 segundos\n' +
+        '- 1 madeira = 60 segundos\n\n' +
+        '⚠️ Aviso importante:\n' +
+        '❌ Inserir itens inválidos nos slots pode causar falhas ou perda de itens!\n' +
+        '✔️ Use APENAS folhas ou madeira no slot de combustível\n' +
+        '✔️ Use APENAS folhas ou fibra no slot de crafting\n' +
+        '⚠️ NÃO coloque nada no slot de Output — ele é apenas para receber cordas.'
+      );
+    });
+
+
+    // --- Mundo ---
+    const islandRadius = 2000;
+    const objects = [];
+    const HP_FIVE_HITS = 5 * 35;  // 175 HP
+
+    // Spawn inicial de tudo de uma vez:
+    for (let i = 0; i < 5; i++) {
+      spawnOnLand('tree', HP_FIVE_HITS);
+      spawnOnLand('rockBig', HP_FIVE_HITS);
+    }
+    for (let i = 0; i < 20; i++) {
+      spawnOnLand('rockSmall', 1);
+      spawnOnLand('stick', 1);
+    }
+    for (let i = 0; i < 10; i++) {
+      spawnOnLand('bush', 1);
+    }
+    function rand() { return Math.random() * islandRadius * 2 - islandRadius; }
+
+    // --- Player e Status ---
+    const player = {
+      x: 0, y: 0, size: 20,
+      inventory: [], invSize: 4, selected: 0,
+      armor: null, armorDur: 0,
+      tool: null, toolDur: 0,
+      health: 100, hunger: 100, thirst: 100
+    };
+    // Inventário e níveis de mochila
+    player.invSize = 4;   // sem mochila → 4 slots
+    player.backpackLevel = -1;  // -1 = sem mochila; 0..4 = níveis de mochila
+    player.moveSpeed = 2;
+
+    let magicParrot = null;
+    let parrotReward = null;      // { type:'leaf'|'fiber'|'fruit'|'potion'|'seeds'|'plant', qty }
+    let parrotState = 'wild';     // 'wild' ou 'domestic'
+    let parrotFollowSpeed = player.moveSpeed;
+    let parrotCircle = null;      // animação de círculo branco
+
+    // ─── Função de spawn (único) ───
+    function spawnMagicParrot() {
+      if (magicParrot) return;  // só uma instância
+      let x, y;
+      do {
+        x = Math.random() * islandRadius * 2 - islandRadius;
+        y = Math.random() * islandRadius * 2 - islandRadius;
+      } while (Math.hypot(x, y) > islandRadius);
+      magicParrot = { type: 'magicparrot', x, y };
+      objects.push(magicParrot);
+    }
+
+
+
+    // Custos de upgrade de cada nível (de X → X+1)
+    const backpackCosts = {
+      0: { wood: 0, rope: 0 },   // nível -1→0 (criação da mochila nível 0 via craftPack)
+      1: { wood: 10 },           // 6→7 slots
+      2: { wood: 30 },           // 7→8 slots
+      3: { wood: 60 },           // 8→9 slots
+      4: { wood: 99, rope: 3 }     // 9→10 slots
+    };
+    const maxBackpackLevel = 4;
+    const bars = {
+      health: document.querySelector('#barHealth .fill'),
+      hunger: document.querySelector('#barHunger .fill'),
+      thirst: document.querySelector('#barThirst .fill')
+    };
+    function updateBars() {
+      bars.health.style.width = player.health + '%';
+      bars.hunger.style.width = player.hunger + '%';
+      bars.thirst.style.width = player.thirst + '%';
+    }
+    updateBars();
+
+    const WOOD_ARMOR = {
+      id: 'woodArmor',
+      type: 'armor',
+      name: 'Armadura de Madeira',
+      img: 'https://www.medievalware.com/wp-content/uploads/2021/04/viking-leather-armor-2.png',
+      cost: { fiber: 4, wood: 20 },
+      durability: 30,
+      permanent: true,
+      onEquip: player => {
+        player.armor = WOOD_ARMOR.id;
+        player.armorDur = WOOD_ARMOR.durability;    // ← adiciona
+        player.armorDurMax = WOOD_ARMOR.durability;    // ← adiciona
+        updateArmorHUD();
+        player.damageReduction = (player.damageReduction || 0) + 0.60;
+        player.moveSpeed *= 1.20;
+      }
+    };
+
+
+    // --- HUD ---
+    const hud = document.getElementById('hud');
+    function updateHUD() {
+      hud.innerHTML = '';
+      for (let i = 0; i < player.invSize; i++) {
+        let slot = document.createElement('div');
+        slot.className = 'slot' + (i === player.selected ? ' selected' : '');
+        let item = player.inventory[i];
+        if (item) {
+          let img = document.createElement('img');
+          img.src = imgs[item.type].src;
+          slot.appendChild(img);
+          let count = document.createElement('span');
+          count.textContent = item.count;
+          count.style.position = 'absolute';
+          count.style.bottom = '0'; count.style.right = '0';
+          count.style.background = 'rgba(0,0,0,0.5)'; count.style.color = '#fff';
+          slot.appendChild(count);
+        }
+        slot.addEventListener('click', () => { player.selected = i; updateHUD(); });
+        hud.appendChild(slot);
+      }
+      updateToolHUD();
+      const sel = player.inventory[player.selected];
+      btnConsume.disabled = !(sel && (sel.type === 'fruit' || sel.type === 'coconut' || sel.type === 'potion' || sel.type === 'zoomPotion'));
+    }
+    updateHUD();
+
+    function totalCount(type) {
+      return player.inventory
+        .filter(i => i && i.type === type)
+        .reduce((sum, i) => sum + i.count, 0);
+    }
+
+    document.getElementById('craftRaft').onclick = () => {
+      const haveWood = totalCount('wood');
+      const haveRock = totalCount('rockSmall');
+      const haveRope = totalCount('rope');
+      const haveFiber = totalCount('fiber');
+
+      if (
+        haveWood >= raftCost.wood
+        && haveRock >= raftCost.rockSmall
+        && haveRope >= raftCost.rope
+        && haveFiber >= raftCost.fiber
+      ) {
+        removeItem('wood', raftCost.wood);
+        removeItem('rockSmall', raftCost.rockSmall);
+        removeItem('rope', raftCost.rope);
+        removeItem('fiber', raftCost.fiber);
+
+        // CHECAGEM DE DISTÂNCIA
+        const dist = Math.hypot(player.x, player.y);
+        console.log(`DEBUG: player.x=${player.x.toFixed(1)}, y=${player.y.toFixed(1)}, dist=${dist.toFixed(1)}`);
+
+        if (dist >= 1900) {
+          objects.push({ type: 'raft', x: player.x, y: player.y });
+          // Mostra overlay de vitória com os dois botões
+          const endDiv = document.createElement('div');
+          Object.assign(endDiv.style, {
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'rgba(0,0,0,0.85)',
+            color: '#fff',
+            padding: '30px',
+            textAlign: 'center',
+            borderRadius: '8px',
+            zIndex: 2000
+          });
+          endDiv.innerHTML = `
     <h2>🏝️ Você escapou da ilha!</h2>
     <div style="margin-top:20px;">
       <button id="btnRestart" style="margin-right:10px; padding:10px 20px;">Jogar Novamente</button>
       <button id="btnVideo"   style="padding:10px 20px;">Vídeo Especial</button>
     </div>
     `;
-document.body.appendChild(endDiv);
+          document.body.appendChild(endDiv);
 
-// Handler dos botões
-document.getElementById('btnRestart').onclick = () => location.reload();
-document.getElementById('btnVideo').onclick   = () => {
-  window.open('https://www.youtube.com/watch?v=j6GScMfHqj0', '_blank');
-};
-  localStorage.setItem('craftraft', 'true');
+          // Handler dos botões
+          document.getElementById('btnRestart').onclick = () => location.reload();
+          document.getElementById('btnVideo').onclick = () => {
+            window.open('https://www.youtube.com/watch?v=j6GScMfHqj0', '_blank');
+          };
+          localStorage.setItem('craftraft', 'true');
 
-      alert('🏆 Parabéns! Você construiu a jangada e venceu o jogo!');
-      alert('🔓 Mod Menu liberado! Reinicie o jogo para testar os recursos especiais.');
-      // ... resto da vitória
-    } else {
-      alert(`Você está a ${dist.toFixed(1)}px do centro; precisa de ≥ 1900px para construir.`);
-    }
-  } else {
-    alert('Recursos insuficientes para construir a jangada.');
-  }
-};
+          alert('🏆 Parabéns! Você construiu a jangada e venceu o jogo!');
+          alert('🔓 Mod Menu liberado! Reinicie o jogo para testar os recursos especiais.');
+          // ... resto da vitória
+        } else {
+          alert(`Você está a ${dist.toFixed(1)}px do centro; precisa de ≥ 1900px para construir.`);
+        }
+      } else {
+        alert('Recursos insuficientes para construir a jangada.');
+      }
+    };
 
-document.getElementById('craftZoomPotion').onclick = () => {
-  if (totalCount('leaf') >= 10 && totalCount('fiber') >= 5) {
-    removeItem('leaf', 10);
-    removeItem('fiber', 5);
-    giveItem('zoomPotion', 1);
-    alert('Poção de Zoom criada!');
-  } else {
-    alert('Recursos insuficientes!');
-  }
-};
+    document.getElementById('craftZoomPotion').onclick = () => {
+      if (totalCount('leaf') >= 10 && totalCount('fiber') >= 5) {
+        removeItem('leaf', 10);
+        removeItem('fiber', 5);
+        giveItem('zoomPotion', 1);
+        alert('Poção de Zoom criada!');
+      } else {
+        alert('Recursos insuficientes!');
+      }
+    };
 
-// Plantar seed
-document.getElementById('plantSeed').onclick = () => {
-  const item = getItem('seeds');
-  if (!item || item.count < 1) {
-    alert('Você precisa de pelo menos 1 seed para plantar.');
-    return;
-  }
-  // Remove a semente do inventário
-  removeItem('seeds', 1);
-  updateHUD();
+    // Plantar seed
+    document.getElementById('plantSeed').onclick = () => {
+      const item = getItem('seeds');
+      if (!item || item.count < 1) {
+        alert('Você precisa de pelo menos 1 seed para plantar.');
+        return;
+      }
+      // Remove a semente do inventário
+      removeItem('seeds', 1);
+      updateHUD();
 
-  // Cria um “sapling” temporário que não é colidível, só para representação (ou invisível)
-  const sapling = {
-    type: 'sapling',
-    x: player.x,
-    y: player.y,
-    plantedAt: Date.now()
-  };
-  objects.push(sapling);
+      // Cria um “sapling” temporário que não é colidível, só para representação (ou invisível)
+      const sapling = {
+        type: 'sapling',
+        x: player.x,
+        y: player.y,
+        plantedAt: Date.now()
+      };
+      objects.push(sapling);
 
-  alert('Semente plantada! Aguarde 3 minutos para crescer.');
-  
-  // Em 3 minutos, substitui o sapling por uma manualtree
-  setTimeout(() => {
-    // remove o sapling
-    const idx = objects.indexOf(sapling);
-    if (idx !== -1) objects.splice(idx, 1);
+      alert('Semente plantada! Aguarde 3 minutos para crescer.');
 
-    // adiciona a manualtree
-    objects.push({
-      type:       'manualtree',
-      x:          sapling.x,
-      y:          sapling.y,
-      hp:         getDefaultHP('tree'),
-      hpMax:      getDefaultHP('tree'),
-      noRespawn:  true   // flag para não usar o respawn automático
-    });
-  }, 3 * 60 * 1000); // 3 minutos em ms
-};
+      // Em 3 minutos, substitui o sapling por uma manualtree
+      setTimeout(() => {
+        // remove o sapling
+        const idx = objects.indexOf(sapling);
+        if (idx !== -1) objects.splice(idx, 1);
 
-// Toggle Mod Menu
-const btnModMenu  = document.getElementById('btnModMenu');
-const modMenuPanel = document.getElementById('modMenuPanel');
-const btnCloseMod = document.getElementById('btnCloseMod');
+        // adiciona a manualtree
+        objects.push({
+          type: 'manualtree',
+          x: sapling.x,
+          y: sapling.y,
+          hp: getDefaultHP('tree'),
+          hpMax: getDefaultHP('tree'),
+          noRespawn: true   // flag para não usar o respawn automático
+        });
+      }, 3 * 60 * 1000); // 3 minutos em ms
+    };
 
-let modClickCount = 0;
-const clickResetDelay = 1000; // ms para resetar o contador se demorar demais
-let clickTimer = null;
+    // Toggle Mod Menu
+    const btnModMenu = document.getElementById('btnModMenu');
+    const modMenuPanel = document.getElementById('modMenuPanel');
+    const btnCloseMod = document.getElementById('btnCloseMod');
 
-btnModMenu.onclick = () => {
-  modClickCount++;
-  clearTimeout(clickTimer);
+    let modClickCount = 0;
+    const clickResetDelay = 1000; // ms para resetar o contador se demorar demais
+    let clickTimer = null;
 
-  if (modClickCount >= 3) {
-    // Abrir / fechar painel
-    modMenuPanel.style.display = modMenuPanel.style.display === 'none' ? 'block' : 'none';
-    modClickCount = 0;
-  } else {
-    // Se não foram 3 cliques, espera um pouco antes de resetar
-    clickTimer = setTimeout(() => {
+    btnModMenu.onclick = () => {
+      modClickCount++;
+      clearTimeout(clickTimer);
+
+      if (modClickCount >= 3) {
+        // Abrir / fechar painel
+        modMenuPanel.style.display = modMenuPanel.style.display === 'none' ? 'block' : 'none';
+        modClickCount = 0;
+      } else {
+        // Se não foram 3 cliques, espera um pouco antes de resetar
+        clickTimer = setTimeout(() => {
+          modClickCount = 0;
+        }, clickResetDelay);
+      }
+    };
+
+    btnCloseMod.onclick = () => {
+      modMenuPanel.style.display = 'none';
       modClickCount = 0;
-    }, clickResetDelay);
-  }
-};
-
-btnCloseMod.onclick = () => {
-  modMenuPanel.style.display = 'none';
-  modClickCount = 0;
-};
-
-btnUpgradeChest.onclick = () => {
-  if (!activeChest) return;
-  const chest = activeChest;
-
-  if (chest.level >= 3) return;
-
-  const cost = chest.level === 1
-    ? { wood: 10, rockSmall: 15 }
-    : { wood: 20, rockSmall: 30 };
-
-  if (totalCount('wood') >= cost.wood && totalCount('rockSmall') >= cost.rockSmall) {
-    removeItem('wood', cost.wood);
-    removeItem('rockSmall', cost.rockSmall);
-
-    chest.level++;
-    chest.size += 3;
-    chestInventories[chest.id].length = chest.size;
-
-    // dá 2 sementes como conquista no upgrade final
-if (chest.level === 3 && !sessionStorage.getItem('chestUpgraded:' + chest.id)) {
-    sessionStorage.setItem('chestUpgraded:' + chest.id, 'true');
-
-    // Quantas sementes daríamos
-    const current    = Number(sessionStorage.getItem('pendingSeeds')) || 0;
-    const baseAmount = 2;
-
-    console.log('upgradeChest(): hasFreeSlot?', hasFreeSlot('seeds'));
-
-    if (hasFreeSlot('seeds')) {
-      // slot disponível: dá direto
-      giveItem('seeds', baseAmount);
-      alert(`🏆 Conquista: Baú Max! Você recebeu ${baseAmount} sementes.`);
-    } else {
-      // sem slot: acumula em pending
-      const newPending = current + baseAmount;
-      sessionStorage.setItem('pendingSeeds', newPending);
-      alert(`🏆 Conquista: Baú Max! Você recebeu ${baseAmount} sementes (pendentes).`);
-      showRewardButton();
-    }
-
-    console.log('upgradeChest(): pendingSeeds agora =', sessionStorage.getItem('pendingSeeds'));
-  }
-
-
-
-    renderChestSlots();
-    updateSwapButton();
-  } else {
-    alert('Recursos insuficientes para upgrade do baú.');
-  }
-};
-
-
-// Handler para todos os botões “Add”
-document.querySelectorAll('.modAdd').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const type = btn.getAttribute('data-type');
-    // dá 10 unidades de cada item (exceto ferramentas: dá durabilidade)
-    if (type === 'axe' || type === 'sword' || type === 'sickle') {
-    player.tool    = type;
-    player.toolDur = (type === 'axe' ? 20 : (type === 'sword' ? 35 : 20));
-    }
-    else if (type === 'potion' || type === 'zoomPotion') {
-      giveItem(type, 1); // dá só 1
-    }
-
-     else {
-      giveItem(type, 10);
-    }
-    updateHUD();
-    alert(`Adicionado: ${type}`);
-  });
-});
-
-document.getElementById('craftPotion').onclick = () => {
-  const leaves = totalCount('leaf');
-  const fruits = totalCount('fruit');
-  const coconuts = totalCount('coconut');
-  if (leaves>=5 && fruits>=16 && coconuts>=8) {
-    removeItem('leaf', 5);
-    removeItem('fruit', 16);
-    removeItem('coconut', 8);
-    giveItem('potion', 1);
-    alert('Você craftou uma Poção Mágica!');
-  } else {
-    alert('Recursos insuficientes para craftar a poção.');
-  }
-};
-
-
-const btnBuyChest = document.getElementById('btnBuyChest');
-btnBuyChest.onclick = () => {
-  // checa recursos
-  const wood = getItem('wood')?.count || 0;
-  const rock = getItem('rockSmall')?.count || 0;
-  const leaf = getItem('leaf')?.count || 0;
-  if (wood < 10 || rock < 25 || leaf < 3) {
-    alert('Recursos insuficientes para comprar o baú.');
-    return;
-  }
-  // consome recursos
-  removeItem('wood', 10);
-  removeItem('rockSmall', 25);
-  removeItem('leaf', 3);
-  updateHUD();
-  // spawn no player
-  spawnChest(player.x, player.y);
-  alert('Baú comprado!');
-  // fecha painel de craft
-  document.getElementById('craftPanel').style.display = 'none';
-};
-
-
-document.getElementById('btnCraft').onclick = () => {
-  const p = document.getElementById('craftPanel');
-  p.style.display = (p.style.display === 'none' || p.style.display === '') 
-                    ? 'block' 
-                    : 'none';
-};
-
-document.getElementById('btnCloseCraft').onclick = () => {
-  document.getElementById('craftPanel').style.display = 'none';
-};
-
-// Quando o jogador "comprar" o baú:
-const chestInventories = {};  // id → array de slots
-
-function spawnChest(x, y) {
-  const id = Date.now();
-  chestInventories[id] = Array(6).fill(null);  // 6 slots vazios
-  objects.push({
-    type: 'chest',
-    id, x, y,
-    width: 64, height: 64,
-    size: 6,
-    level: 1  // ← novo
-  });
-}
-
-const slotsOcupados = player.inventory.filter(i => i !== null).length;
-
-// Função para trocar entre ferramenta equipada e guardada
-function toggleTool() {
-  const sel = player.inventory[player.selected];
-
-  if (!player.tool && sel && ['axe', 'sword', 'sickle'].includes(sel.type)) {
-    // Equipa ferramenta do slot
-    player.tool = sel.type;
-    player.toolDur = sel.count;
-    player.inventory[player.selected] = null;
-    compactInventory();
-    ensureInventorySize();
-  } else if (player.tool) {
-    // Conta apenas os slots ocupados
-    const usados = player.inventory.filter(i => i !== null && i !== undefined).length;
-
-    if (usados < player.invSize) {
-      // Adiciona nova ferramenta no primeiro slot vazio
-      player.inventory.push({ type: player.tool, count: player.toolDur });
-      compactInventory();
-      ensureInventorySize();
-      player.tool = null;
-      player.toolDur = 0;
-    } else {
-      alert('Inventário cheio! Não dá para guardar a ferramenta.');
-    }
-  } else {
-    alert('Selecione um item de ferramenta para equipar.');
-  }
-
-  updateHUD();
-}
-
-
-// Botão
-document.getElementById('btnToggleTool').onclick = toggleTool;
-
-
-function spawnOnLand(type, hp) {
-  let x, y;
-  let attempts = 0;
-  const maxAttempts = 100;
-
-  do {
-    x = Math.random() * islandRadius * 2 - islandRadius;
-    y = Math.random() * islandRadius * 2 - islandRadius;
-    attempts++;
-    if (attempts > maxAttempts) {
-      // Se falhar muitas vezes, teleporta para o centro da ilha
-      x = 0;
-      y = 0;
-      break;
-    }
-  } while (Math.hypot(x, y) > islandRadius); // Garante que está na ilha
-
-  objects.push({ type, x, y, hp, hpMax: hp });
-
-}
-
-// Spawna múltiplos recursos na ilha:
-
-
-const btnOpenChest   = document.getElementById('btnOpenChest');
-const chestPanel     = document.getElementById('chestPanel');
-const chestSlotsDiv  = document.getElementById('chestSlots');
-const btnCloseChest  = document.getElementById('btnCloseChest');
-const btnSwap        = document.getElementById('btnSwap');
-const btnMerge = document.getElementById('btnMerge');
-
-
-btnMerge.onclick = mergeChestStacks;
-
-
-let activeChest = null;
-
-// Ao clicar em “Abrir Baú”
-btnOpenChest.onclick = () => {
-  if (!nearbyChest) return;  // sem baú próximo
-  const dx = player.x - nearbyChest.x;
-  const dy = player.y - nearbyChest.y;
-  if (Math.hypot(dx, dy) > 100) {
-    alert('Você está muito longe do baú!');
-    return;
-  }
-  activeChest = nearbyChest;
-  chestPanel.style.display = 'block';
-  renderChestSlots();
-};
-
-
-// Fechar
-btnCloseChest.onclick = () => {
-  chestPanel.style.display = 'none';
-  activeChest   = null;
-  chestSelected = null;    // limpa seleção
-  updateSwapButton();
-};
-
-// 6) Mostrar/ocultar botão
-// No updateParrotUI(), depois de mostrar/ocultar #btnParrotInteract/#btnDomesticate,
-// também mostre o toggle quando domesticar:
-function updateParrotUI() {
-  if (!magicParrot) return;
-  const d = Math.hypot(player.x - magicParrot.x, player.y - magicParrot.y);
-
-  // Se domesticado, sempre mostre o toggle:
-  if (parrotState === 'domestic') {
-    btnParrotToggleFollow.style.display = 'block';
-  } else {
-    btnParrotToggleFollow.style.display = 'none';
-  }
-
-  // Domesticar / Interagir (mantendo 60px bottom):
-  if (parrotState==='wild' && d<=100) {
-    btnDomesticate.style.display    = 'block';
-    btnParrotInteract.style.display = 'none';
-  } else if (parrotState==='domestic' && parrotReward && d<=100) {
-    btnParrotInteract.style.display = 'block';
-    btnDomesticate.style.display    = 'none';
-  } else {
-    btnDomesticate.style.display    = 'none';
-    btnParrotInteract.style.display = 'none';
-  }
-}
-setInterval(updateParrotUI, 200);
-
-function updateParrotToggleUI() {
-  btnParrotToggleFollow.style.display =
-    (parrotState === 'domestic') ? 'block' : 'none';
-}
-
-btnParrotToggleFollow.onclick = () => {
-  parrotFollowEnabled = !parrotFollowEnabled;
-  console.log('parrotFollowEnabled agora =', parrotFollowEnabled);
-  btnParrotToggleFollow.innerText = parrotFollowEnabled
-    ? 'Papagaio Para de Seguir'
-    : 'Fazer Papagaio Seguir';
-};
-
-// 7) Domesticação
-document.getElementById('btnDomesticate').onclick = ()=>{
-  const fruits = getItem('fruit')?.count||0;
-  if (fruits<=0){ alert('Precisa de frutas para domesticar!'); return; }
-  let use = Math.min(fruits, 10);
-  removeItem('fruit', use);
-  const chance = use>=10 ? 1 : 0.1*use;
-  if (Math.random()<chance) {
-    parrotState='domestic';
-    alert('Papagaio domesticado!');
-    // a cada 5min gera recompensa
-    setInterval(() => generateParrotReward(), 5*60*1000);
-  } else {
-    alert('Falhou na domesticação...');
-  }
-};
-
-// 8) Geração de recompensa
-function generateParrotReward() {
-  const r = Math.random() * 100;
-
-  if (r < 5) {
-    // Muito raro: usina
-    parrotReward = { type: 'plant', qty: 1 };
-  } else if (r < 20) {
-    // Raro: 50% chance entre semente e poção normal
-    if (Math.random() < 0.5) {
-      const seeds = randInt(1, 3);
-      parrotReward = { type: 'seeds', qty: seeds };
-    } else {
-      parrotReward = { type: 'potion', qty: 1 };
-    }
-  } else {
-    // Comum — agora inclui também zoomPotion
-    const commons = ['leaf', 'fiber', 'fruit', 'zoomPotion'];
-    const type    = commons[randInt(0, commons.length - 1)];
-    let qty;
-    if (type === 'leaf') {
-      qty = randInt(5, 10);
-    } else if (type === 'fiber') {
-      qty = randInt(4, 5);
-    } else if (type === 'fruit') {
-      qty = randInt(8, 14);
-    } else { // zoomPotion
-      qty = 1;
-    }
-    parrotReward = { type, qty };
-  }
-
-  // Efeito visual e aviso
-  parrotCircle = true;
-  setTimeout(() => parrotCircle = false, 10000);
-  alert('Papagaio tem algo para você! Aproxe-se e interaja.');
-}
-
-
-// 9) Interação e entrega
-document.getElementById('btnParrotInteract').onclick = () => {
-  if (!parrotReward) return;
-  const { type, qty } = parrotReward;
-
-  if (type === 'plant') {
-    // constrói a usina GRATUITAMENTE, sem checar recursos:
-    const plant = {
-      ...PLANT,
-      x: player.x,
-      y: player.y,
-      uid: Date.now(),
-      upgraded: false,
-      slots: { fuel: null, craftIn: null, output: null },
-      timers: { fuelRemaining: 0, craftTimer: 0 }
     };
-    objects.push(plant);
-    alert('🎉 Você recebeu e construiu uma Usina grátis!');
-  } else {
-    giveItem(type, qty);
-    alert(`Você recebeu ${qty}× ${type}!`);
-  }
 
-  parrotReward = null;
-  document.getElementById('btnParrotInteract').style.display = 'none';
-  updateHUD();
-};
+    btnUpgradeChest.onclick = () => {
+      if (!activeChest) return;
+      const chest = activeChest;
 
+      if (chest.level >= 3) return;
 
-function mergeChestStacks() {
-  if (!activeChest) return;
-  const inv = chestInventories[activeChest.id];
+      const cost = chest.level === 1
+        ? { wood: 10, rockSmall: 15 }
+        : { wood: 20, rockSmall: 30 };
 
-  // 1) Agrupa contagens por tipo
-  const totals = {};
-  for (let item of inv) {
-    if (!item) continue;
-    totals[item.type] = (totals[item.type] || 0) + item.count;
-  }
+      if (totalCount('wood') >= cost.wood && totalCount('rockSmall') >= cost.rockSmall) {
+        removeItem('wood', cost.wood);
+        removeItem('rockSmall', cost.rockSmall);
 
-  // 2) Zera o inventário
-  for (let i = 0; i < inv.length; i++) {
-    inv[i] = null;
-  }
+        chest.level++;
+        chest.size += 3;
+        chestInventories[chest.id].length = chest.size;
 
-  // 3) Redistribui em stacks de até 99
-  let cursor = 0;
-  for (let type in totals) {
-    let remaining = totals[type];
-    while (remaining > 0 && cursor < inv.length) {
-      const stack = Math.min(99, remaining);
-      inv[cursor++] = { type, count: stack };
-      remaining -= stack;
-    }
-  }
+        // dá 2 sementes como conquista no upgrade final
+        if (chest.level === 3 && !sessionStorage.getItem('chestUpgraded:' + chest.id)) {
+          sessionStorage.setItem('chestUpgraded:' + chest.id, 'true');
 
-  // 4) Atualiza a interface
-  renderChestSlots();
-  updateSwapButton();
-}
+          // Quantas sementes daríamos
+          const current = Number(sessionStorage.getItem('pendingSeeds')) || 0;
+          const baseAmount = 2;
 
-// Handler de Craft da Armadura de Madeira
-document.getElementById('craftWoodArmor').onclick = () => {
-  const haveFiber = totalCount('fiber');
-  const haveWood  = totalCount('wood');
-  if (haveFiber >= WOOD_ARMOR.cost.fiber && haveWood >= WOOD_ARMOR.cost.wood) {
-    removeItem('fiber', WOOD_ARMOR.cost.fiber);
-    removeItem('wood',  WOOD_ARMOR.cost.wood);
-    WOOD_ARMOR.onEquip(player);
-    player.armor = 'woodArmor';
-    updateHUD();
-    updateArmorHUD();
-    alert('Armadura de Madeira criada e equipada!');
-  } else {
-    alert('Recursos insuficientes para Armadura de Madeira.');
-  }
-};
+          console.log('upgradeChest(): hasFreeSlot?', hasFreeSlot('seeds'));
 
-// Handler de Craft da Foice
-// Handler de Craft da Foice — agora equipando direto
-document.getElementById('craftSickle').onclick = () => {
-  const haveWood = totalCount('wood');
-  const haveRock = totalCount('rockSmall');
-  if (haveWood >= SICKLE.cost.wood && haveRock >= SICKLE.cost.rockSmall) {
-    removeItem('wood',      SICKLE.cost.wood);
-    removeItem('rockSmall', SICKLE.cost.rockSmall);
-    // equipa a foice diretamente:
-    player.tool    = SICKLE.id;
-    player.toolDur = SICKLE.durability;
-    updateHUD();
-    alert(`Foice criada e equipada! Dano: ${SICKLE.damage}, Alcance extra: ${SICKLE.reachBonus}, Durabilidade: ${SICKLE.durability}`);
-  } else {
-    alert('Recursos insuficientes para criar a foice.');
-  }
-};
+          if (hasFreeSlot('seeds')) {
+            // slot disponível: dá direto
+            giveItem('seeds', baseAmount);
+            alert(`🏆 Conquista: Baú Max! Você recebeu ${baseAmount} sementes.`);
+          } else {
+            // sem slot: acumula em pending
+            const newPending = current + baseAmount;
+            sessionStorage.setItem('pendingSeeds', newPending);
+            alert(`🏆 Conquista: Baú Max! Você recebeu ${baseAmount} sementes (pendentes).`);
+            showRewardButton();
+          }
+
+          console.log('upgradeChest(): pendingSeeds agora =', sessionStorage.getItem('pendingSeeds'));
+        }
 
 
-// Renderizar slots do baú
-function renderChestSlots() {
-  chestSlotsDiv.innerHTML = '';
-  for (let i = 0; i < activeChest.size; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'slot' + (i === chestSelected ? ' selected' : '');
-    slot.style.margin     = '4px';
-    slot.style.width      = '48px';
-    slot.style.height     = '48px';
-    slot.style.background = '#ccc';
-    slot.style.position   = 'relative';
 
-    const item = chestInventories[activeChest.id][i];
-    if (item) {
-      const img = document.createElement('img');
-      img.src    = imgs[item.type].src;
-      img.style.width  = '100%';
-      img.style.height = '100%';
-      slot.appendChild(img);
+        renderChestSlots();
+        updateSwapButton();
+      } else {
+        alert('Recursos insuficientes para upgrade do baú.');
+      }
+    };
 
-      const count = document.createElement('span');
-      count.textContent = item.count;
-      Object.assign(count.style, {
-        position: 'absolute',
-        bottom:   '0',
-        right:    '0',
-        background:'rgba(0,0,0,0.5)',
-        color:     '#fff'
+
+    // Handler para todos os botões “Add”
+    document.querySelectorAll('.modAdd').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-type');
+        // dá 10 unidades de cada item (exceto ferramentas: dá durabilidade)
+        if (type === 'axe' || type === 'sword' || type === 'sickle') {
+          player.tool = type;
+          player.toolDur = (type === 'axe' ? 20 : (type === 'sword' ? 35 : 20));
+        }
+        else if (type === 'potion' || type === 'zoomPotion') {
+          giveItem(type, 1); // dá só 1
+        }
+
+        else {
+          giveItem(type, 10);
+        }
+        updateHUD();
+        alert(`Adicionado: ${type}`);
       });
-      slot.appendChild(count);
-    }
-
-    slot.addEventListener('click', () => {
-      chestSelected = i;
-      updateSwapButton();
-      renderChestSlots();  // re-render para atualizar a classe "selected"
     });
 
-    chestSlotsDiv.appendChild(slot);
-  }
-
-  document.getElementById('btnUpgradeChest').style.display =
-  activeChest && activeChest.level < 3 ? 'inline-block' : 'none';
-}
-
-// Variáveis de seleção
-let chestSelected = null;
-let playerSelected = null; // já usa player.selected
-
-function updateSwapButton() {
-  btnSwap.disabled = (
-       activeChest === null
-    || chestSelected === null
-    || player.selected === null
-    || !chestInventories[activeChest.id][chestSelected]  // sem item no slot do baú
-    && !player.inventory[player.selected]               // e sem item no slot do player
-  );
-}
-
-
-btnSwap.onclick = () => {
-  if (!activeChest || chestSelected === null || player.selected === null) return;
-
-  const inv   = chestInventories[activeChest.id];
-  const pIdx  = player.selected;
-  const cIdx  = chestSelected;
-  const pItem = player.inventory[pIdx] || null;
-  const cItem = inv[cIdx]           || null;
-
-  // Se os dois slots estiverem vazios, não faz nada
-  if (!pItem && !cItem) return;
-
-  // 1) Coloca o item do baú no inventário do player
-  if (cItem) {
-    player.inventory[pIdx] = cItem;
-  } else {
-    // se o baú não tinha item, limpa o slot do player
-    player.inventory[pIdx] = null;
-  }
-
-  // 2) Coloca o item do player no baú
-  inv[cIdx] = pItem || null;
-
-  // 3) Compacta o inventário (remove todos os nulls)
-  player.inventory = player.inventory.filter(slot => slot !== null);
-
-  // 4) Preenche com nulls até invSize
-  while (player.inventory.length < player.invSize) {
-    player.inventory.push(null);
-  }
-
-  // Atualiza HUD, slots do baú e estado do botão
-  updateHUD();
-  renderChestSlots();
-  updateSwapButton();
-};
-
-
-
-function compactInventory() {
-  player.inventory = player.inventory.filter(slot => slot !== null);
-}
-
-function ensureInventorySize() {
-  compactInventory();
-  while (player.inventory.length < player.invSize) {
-    player.inventory.push(null);
-  }
-}
-
-
-function updateToolHUD(){
-  let txt;
-  if (!player.tool) {
-    txt = 'Nenhuma';
-  } else {
-    // Mapeia cada id para o nome que será mostrado
-    const names = {
-      axe:    'Machado',
-      sword:  'Espada',
-      sickle: 'Foice'
+    document.getElementById('craftPotion').onclick = () => {
+      const leaves = totalCount('leaf');
+      const fruits = totalCount('fruit');
+      const coconuts = totalCount('coconut');
+      if (leaves >= 5 && fruits >= 16 && coconuts >= 8) {
+        removeItem('leaf', 5);
+        removeItem('fruit', 16);
+        removeItem('coconut', 8);
+        giveItem('potion', 1);
+        alert('Você craftou uma Poção Mágica!');
+      } else {
+        alert('Recursos insuficientes para craftar a poção.');
+      }
     };
-    const displayName = names[player.tool] || player.tool;
-    txt = `${displayName} (Dur: ${player.toolDur})`;
-  }
-  document.getElementById('toolHUD').innerText = 'Ferramenta: ' + txt;
-}
-
-const plantFuelEl    = document.getElementById('plantFuel');
-const plantCraftEl   = document.getElementById('plantCraftIn');
-const plantOutputEl  = document.getElementById('plantOutput');
-
-function clearPlantSelection() {
-  [plantFuelEl, plantCraftEl, plantOutputEl].forEach(el => el.classList.remove('selected'));
-}
-
-// Ao clicar em cada slot, marca seleção
-plantFuelEl.addEventListener('click', () => {
-  clearPlantSelection();
-  plantFuelEl.classList.add('selected');
-  plantSelectedSlot = 'fuel';
-});
-
-plantCraftEl.addEventListener('click', () => {
-  clearPlantSelection();
-  plantCraftEl.classList.add('selected');
-  plantSelectedSlot = 'craftIn';
-});
-
-plantOutputEl.addEventListener('click', () => {
-  clearPlantSelection();
-  plantOutputEl.classList.add('selected');
-  plantSelectedSlot = 'output';
-});
-
-const PLANT = {
-  id: 'plant',
-  type: 'machine',
-  name: 'Usina',
-  img: 'https://img.freepik.com/premium-vector/pixel-art-factory-building-with-smoke-from-chimneys_1292377-12397.jpg',
-  cost: { wood: 30, rockSmall: 30, potion: 1, rope: 4 },
-  slots: {
-    fuel:    null,  // aceita: leaf (5s), wood (60s)
-    craftIn: null,  // aceita leaf (3→1 rope em 30s) ou fiber (1→2 ropes)
-    output:  null,
-  },
-  timers: {
-    fuelRemaining: 0,
-    craftTimer:    0,
-  }
-};
-
-document.getElementById('btnClosePlant').onclick = () => {
-  plantPanel.style.display = 'none';
-  activePlant = null;
-};
 
 
-document.getElementById('craftPlant').onclick = () => {
-  if (totalCount('wood')>=30 && totalCount('rockSmall')>=30 
-      && totalCount('potion')>=1 && totalCount('rope')>=4) {
-    removeItem('wood',30);
-    removeItem('rockSmall',30);
-    removeItem('potion',1);
-    removeItem('rope',4);
-    const plant = {
-      ...PLANT,
-      x: player.x, y: player.y,
-      uid: Date.now(),  // id único
-      upgraded: false,  // ← novo campo
-      slots: { fuel:null, craftIn:null, output:null },
-      timers: { fuelRemaining:0, craftTimer:0 }
+    const btnBuyChest = document.getElementById('btnBuyChest');
+    btnBuyChest.onclick = () => {
+      // checa recursos
+      const wood = getItem('wood')?.count || 0;
+      const rock = getItem('rockSmall')?.count || 0;
+      const leaf = getItem('leaf')?.count || 0;
+      if (wood < 10 || rock < 25 || leaf < 3) {
+        alert('Recursos insuficientes para comprar o baú.');
+        return;
+      }
+      // consome recursos
+      removeItem('wood', 10);
+      removeItem('rockSmall', 25);
+      removeItem('leaf', 3);
+      updateHUD();
+      // spawn no player
+      spawnChest(player.x, player.y);
+      alert('Baú comprado!');
+      // fecha painel de craft
+      document.getElementById('craftPanel').style.display = 'none';
     };
-    objects.push(plant);
-    alert('Usina construída e spawnada!');
-  } else alert('Recursos insuficientes.');
-};
-
-let activePlant = null;
-
-function toggleFullScreen() {
-  const btn = document.getElementById('startGameBtn');
-
-  if (
-    !document.fullscreenElement &&
-    !document.webkitFullscreenElement &&
-    !document.mozFullScreenElement &&
-    !document.msFullscreenElement
-  ) {
-    const el = document.documentElement;
-    if (el.requestFullscreen) el.requestFullscreen();
-    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-    else if (el.msRequestFullscreen) el.msRequestFullscreen();
-    btn.textContent = 'Sair da Tela Cheia';
-  } else {
-    if (document.exitFullscreen) document.exitFullscreen();
-    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-    else if (document.msExitFullscreen) document.msExitFullscreen();
-    btn.textContent = 'Tela Cheia';
-  }
-}
-
-// Garante que o texto muda mesmo se fullscreen for alterado fora do botão
-document.addEventListener('fullscreenchange', () => {
-  const btn = document.getElementById('startGameBtn');
-  if (document.fullscreenElement) {
-    btn.textContent = 'Sair da Tela Cheia';
-  } else {
-    btn.textContent = 'Tela Cheia';
-  }
-});
-
-document.getElementById('startGameBtn').addEventListener('click', () => {
-  toggleFullScreen();
-});
 
 
-btnOpenPlant.onclick = () => {
-  // se não há usina próxima, não faz nada
-  if (!nearbyPlant) return;
-  // aqui: define qual é a usina ativa
-  activePlant = nearbyPlant;
-  // então mostra o painel
-  plantPanel.style.display = 'block';
-  renderPlantSlots();
-};
+    document.getElementById('btnCraft').onclick = () => {
+      const p = document.getElementById('craftPanel');
+      p.style.display = (p.style.display === 'none' || p.style.display === '')
+        ? 'block'
+        : 'none';
+    };
 
-document.getElementById('btnClosePlant').onclick = () => {
-  plantPanel.style.display = 'none';
-  activePlant = null;
-};
+    document.getElementById('btnCloseCraft').onclick = () => {
+      document.getElementById('craftPanel').style.display = 'none';
+    };
 
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+    // Quando o jogador "comprar" o baú:
+    const chestInventories = {};  // id → array de slots
 
+    function spawnChest(x, y) {
+      const id = Date.now();
+      chestInventories[id] = Array(6).fill(null);  // 6 slots vazios
+      objects.push({
+        type: 'chest',
+        id, x, y,
+        width: 64, height: 64,
+        size: 6,
+        level: 1  // ← novo
+      });
+    }
 
-function renderPlantSlots(){
-  ['fuel','craftIn','output'].forEach(slot=>{
-    const el = document.getElementById('plant'+ capitalize(slot));
-    const it = activePlant.slots[slot];
-    el.innerHTML = it ? `<img src="${imgs[it.type].src}" /><span>${it.count}</span>` : '';
-  });
+    const slotsOcupados = player.inventory.filter(i => i !== null).length;
 
-  document.getElementById('btnUpgradePlant').style.display =
-  activePlant && !activePlant.upgraded ? 'block' : 'none';
+    // Função para trocar entre ferramenta equipada e guardada
+    function toggleTool() {
+      const sel = player.inventory[player.selected];
 
-}
+      if (!player.tool && sel && ['axe', 'sword', 'sickle'].includes(sel.type)) {
+        // Equipa ferramenta do slot
+        player.tool = sel.type;
+        player.toolDur = sel.count;
+        player.inventory[player.selected] = null;
+        compactInventory();
+        ensureInventorySize();
+      } else if (player.tool) {
+        // Conta apenas os slots ocupados
+        const usados = player.inventory.filter(i => i !== null && i !== undefined).length;
 
-let plantSelectedSlot = null;
-document.querySelectorAll('#plantPanel .slot').forEach(el => {
-  el.onclick = () => {
-    plantSelectedSlot = el.dataset.slot;
-    // adicionar classe “selected” visual…
-  };
-});
+        if (usados < player.invSize) {
+          // Adiciona nova ferramenta no primeiro slot vazio
+          player.inventory.push({ type: player.tool, count: player.toolDur });
+          compactInventory();
+          ensureInventorySize();
+          player.tool = null;
+          player.toolDur = 0;
+        } else {
+          alert('Inventário cheio! Não dá para guardar a ferramenta.');
+        }
+      } else {
+        alert('Selecione um item de ferramenta para equipar.');
+      }
 
-document.getElementById('btnUpgradePlant').onclick = () => {
-  if (totalCount('potion') < 1) {
-    alert('Você precisa de 1 poção para fazer o upgrade!');
-    return;
-  }
-
-  removeItem('potion', 1);
-  activePlant.upgraded = true;
-  alert('Usina aprimorada! Agora ela funciona mesmo à distância.');
-  renderPlantSlots();
-};
-
-
-// 4) Swap com o inventário do player
-document.getElementById('btnSwapPlant').addEventListener('click', () => {
-  if (!activePlant || !plantSelectedSlot) return;
-
-  const pIdx = player.selected;
-  const pItem = player.inventory[pIdx] || null;
-  const mItem = activePlant.slots[plantSelectedSlot] || null;
-
-  const pType = pItem?.type;
-
-  // 🔒 Validações
-  if (plantSelectedSlot === 'fuel' && pItem && !['leaf','wood'].includes(pType)) {
-    return alert('❌ Apenas folha ou madeira como combustível!');
-  }
-  if (plantSelectedSlot === 'craftIn' && pItem && !['leaf','fiber'].includes(pType)) {
-    return alert('❌ Apenas folha ou fibra como matéria-prima!');
-  }
-
-  // ✅ REMOVE do inventário corretamente
-  if (pItem) {
-    player.inventory.splice(pIdx, 1);
-    compactInventory();
-    ensureInventorySize();
-  }
-
-  // ✅ DEVOLVE o item da usina (se existir)
-  if (mItem) {
-    giveItem(mItem.type, mItem.count);
-  }
-
-  // ✅ Clona o item para a usina
-  activePlant.slots[plantSelectedSlot] =
-  (pItem && pItem.count > 0)
-    ? { type: pItem.type, count: pItem.count }
-    : null;
+      updateHUD();
+    }
 
 
-  // ✅ Interface
-  clearPlantSelection();
-  plantSelectedSlot = null;
-  updateHUD();
-  renderPlantSlots();
-});
+    // Botão
+    document.getElementById('btnToggleTool').onclick = toggleTool;
 
 
-function giveToMachineOutput(machine, type, qty) {
-  let out = machine.slots.output;
-  if (!out) machine.slots.output = { type, count: qty };
-  else if (out.type===type) out.count = Math.min(99, out.count + qty);
-  // senão, ignora (não mescla tipos diferentes)
-}
+    function spawnOnLand(type, hp) {
+      let x, y;
+      let attempts = 0;
+      const maxAttempts = 100;
 
-let joystickTouchId = null;
+      do {
+        x = Math.random() * islandRadius * 2 - islandRadius;
+        y = Math.random() * islandRadius * 2 - islandRadius;
+        attempts++;
+        if (attempts > maxAttempts) {
+          // Se falhar muitas vezes, teleporta para o centro da ilha
+          x = 0;
+          y = 0;
+          break;
+        }
+      } while (Math.hypot(x, y) > islandRadius); // Garante que está na ilha
 
-function updateMovement() {
-  let speed = player.moveSpeed;
-    let dx = 0, dy = 0;
+      objects.push({ type, x, y, hp, hpMax: hp });
 
-    // Movimento com as teclas
-    if (keys['w'] || keys['ArrowUp']) dy -= 1;
-    if (keys['s'] || keys['ArrowDown']) dy += 1;
-    if (keys['a'] || keys['ArrowLeft']) dx -= 1;
-    if (keys['d'] || keys['ArrowRight']) dx += 1;
+    }
 
-    // Movimento com o joystick (usando a direção do joystick)
-    dx += joystickDirection.dx; // Atualiza a direção X com base no joystick
-    dy += joystickDirection.dy; // Atualiza a direção Y com base no joystick
+    // Spawna múltiplos recursos na ilha:
 
-    // Normaliza a direção para evitar que a velocidade aumente
-    let magnitude = Math.hypot(dx, dy);
-    if (magnitude > 1) {
+
+    const btnOpenChest = document.getElementById('btnOpenChest');
+    const chestPanel = document.getElementById('chestPanel');
+    const chestSlotsDiv = document.getElementById('chestSlots');
+    const btnCloseChest = document.getElementById('btnCloseChest');
+    const btnSwap = document.getElementById('btnSwap');
+    const btnMerge = document.getElementById('btnMerge');
+
+
+    btnMerge.onclick = mergeChestStacks;
+
+
+    let activeChest = null;
+
+    // Ao clicar em “Abrir Baú”
+    btnOpenChest.onclick = () => {
+      if (!nearbyChest) return;  // sem baú próximo
+      const dx = player.x - nearbyChest.x;
+      const dy = player.y - nearbyChest.y;
+      if (Math.hypot(dx, dy) > 100) {
+        alert('Você está muito longe do baú!');
+        return;
+      }
+      activeChest = nearbyChest;
+      chestPanel.style.display = 'block';
+      renderChestSlots();
+    };
+
+
+    // Fechar
+    btnCloseChest.onclick = () => {
+      chestPanel.style.display = 'none';
+      activeChest = null;
+      chestSelected = null;    // limpa seleção
+      updateSwapButton();
+    };
+
+    // 6) Mostrar/ocultar botão
+    // No updateParrotUI(), depois de mostrar/ocultar #btnParrotInteract/#btnDomesticate,
+    // também mostre o toggle quando domesticar:
+    function updateParrotUI() {
+      if (!magicParrot) return;
+      const d = Math.hypot(player.x - magicParrot.x, player.y - magicParrot.y);
+
+      // Se domesticado, sempre mostre o toggle:
+      if (parrotState === 'domestic') {
+        btnParrotToggleFollow.style.display = 'block';
+      } else {
+        btnParrotToggleFollow.style.display = 'none';
+      }
+
+      // Domesticar / Interagir (mantendo 60px bottom):
+      if (parrotState === 'wild' && d <= 100) {
+        btnDomesticate.style.display = 'block';
+        btnParrotInteract.style.display = 'none';
+      } else if (parrotState === 'domestic' && parrotReward && d <= 100) {
+        btnParrotInteract.style.display = 'block';
+        btnDomesticate.style.display = 'none';
+      } else {
+        btnDomesticate.style.display = 'none';
+        btnParrotInteract.style.display = 'none';
+      }
+    }
+    setInterval(updateParrotUI, 200);
+
+    function updateParrotToggleUI() {
+      btnParrotToggleFollow.style.display =
+        (parrotState === 'domestic') ? 'block' : 'none';
+    }
+
+    btnParrotToggleFollow.onclick = () => {
+      parrotFollowEnabled = !parrotFollowEnabled;
+      console.log('parrotFollowEnabled agora =', parrotFollowEnabled);
+      btnParrotToggleFollow.innerText = parrotFollowEnabled
+        ? 'Papagaio Para de Seguir'
+        : 'Fazer Papagaio Seguir';
+    };
+
+    // 7) Domesticação
+    document.getElementById('btnDomesticate').onclick = () => {
+      const fruits = getItem('fruit')?.count || 0;
+      if (fruits <= 0) { alert('Precisa de frutas para domesticar!'); return; }
+      let use = Math.min(fruits, 10);
+      removeItem('fruit', use);
+      const chance = use >= 10 ? 1 : 0.1 * use;
+      if (Math.random() < chance) {
+        parrotState = 'domestic';
+        alert('Papagaio domesticado!');
+        // a cada 5min gera recompensa
+        setInterval(() => generateParrotReward(), 5 * 60 * 1000);
+      } else {
+        alert('Falhou na domesticação...');
+      }
+    };
+
+    // 8) Geração de recompensa
+    function generateParrotReward() {
+      const r = Math.random() * 100;
+
+      if (r < 5) {
+        // Muito raro: usina
+        parrotReward = { type: 'plant', qty: 1 };
+      } else if (r < 20) {
+        // Raro: 50% chance entre semente e poção normal
+        if (Math.random() < 0.5) {
+          const seeds = randInt(1, 3);
+          parrotReward = { type: 'seeds', qty: seeds };
+        } else {
+          parrotReward = { type: 'potion', qty: 1 };
+        }
+      } else {
+        // Comum — agora inclui também zoomPotion
+        const commons = ['leaf', 'fiber', 'fruit', 'zoomPotion'];
+        const type = commons[randInt(0, commons.length - 1)];
+        let qty;
+        if (type === 'leaf') {
+          qty = randInt(5, 10);
+        } else if (type === 'fiber') {
+          qty = randInt(4, 5);
+        } else if (type === 'fruit') {
+          qty = randInt(8, 14);
+        } else { // zoomPotion
+          qty = 1;
+        }
+        parrotReward = { type, qty };
+      }
+
+      // Efeito visual e aviso
+      parrotCircle = true;
+      setTimeout(() => parrotCircle = false, 10000);
+      alert('Papagaio tem algo para você! Aproxe-se e interaja.');
+    }
+
+
+    // 9) Interação e entrega
+    document.getElementById('btnParrotInteract').onclick = () => {
+      if (!parrotReward) return;
+      const { type, qty } = parrotReward;
+
+      if (type === 'plant') {
+        // constrói a usina GRATUITAMENTE, sem checar recursos:
+        const plant = {
+          ...PLANT,
+          x: player.x,
+          y: player.y,
+          uid: Date.now(),
+          upgraded: false,
+          slots: { fuel: null, craftIn: null, output: null },
+          timers: { fuelRemaining: 0, craftTimer: 0 }
+        };
+        objects.push(plant);
+        alert('🎉 Você recebeu e construiu uma Usina grátis!');
+      } else {
+        giveItem(type, qty);
+        alert(`Você recebeu ${qty}× ${type}!`);
+      }
+
+      parrotReward = null;
+      document.getElementById('btnParrotInteract').style.display = 'none';
+      updateHUD();
+    };
+
+
+    function mergeChestStacks() {
+      if (!activeChest) return;
+      const inv = chestInventories[activeChest.id];
+
+      // 1) Agrupa contagens por tipo
+      const totals = {};
+      for (let item of inv) {
+        if (!item) continue;
+        totals[item.type] = (totals[item.type] || 0) + item.count;
+      }
+
+      // 2) Zera o inventário
+      for (let i = 0; i < inv.length; i++) {
+        inv[i] = null;
+      }
+
+      // 3) Redistribui em stacks de até 99
+      let cursor = 0;
+      for (let type in totals) {
+        let remaining = totals[type];
+        while (remaining > 0 && cursor < inv.length) {
+          const stack = Math.min(99, remaining);
+          inv[cursor++] = { type, count: stack };
+          remaining -= stack;
+        }
+      }
+
+      // 4) Atualiza a interface
+      renderChestSlots();
+      updateSwapButton();
+    }
+
+    // Handler de Craft da Armadura de Madeira
+    document.getElementById('craftWoodArmor').onclick = () => {
+      const haveFiber = totalCount('fiber');
+      const haveWood = totalCount('wood');
+      if (haveFiber >= WOOD_ARMOR.cost.fiber && haveWood >= WOOD_ARMOR.cost.wood) {
+        removeItem('fiber', WOOD_ARMOR.cost.fiber);
+        removeItem('wood', WOOD_ARMOR.cost.wood);
+        WOOD_ARMOR.onEquip(player);
+        player.armor = 'woodArmor';
+        updateHUD();
+        updateArmorHUD();
+        alert('Armadura de Madeira criada e equipada!');
+      } else {
+        alert('Recursos insuficientes para Armadura de Madeira.');
+      }
+    };
+
+    // Handler de Craft da Foice
+    // Handler de Craft da Foice — agora equipando direto
+    document.getElementById('craftSickle').onclick = () => {
+      const haveWood = totalCount('wood');
+      const haveRock = totalCount('rockSmall');
+      if (haveWood >= SICKLE.cost.wood && haveRock >= SICKLE.cost.rockSmall) {
+        removeItem('wood', SICKLE.cost.wood);
+        removeItem('rockSmall', SICKLE.cost.rockSmall);
+        // equipa a foice diretamente:
+        player.tool = SICKLE.id;
+        player.toolDur = SICKLE.durability;
+        updateHUD();
+        alert(`Foice criada e equipada! Dano: ${SICKLE.damage}, Alcance extra: ${SICKLE.reachBonus}, Durabilidade: ${SICKLE.durability}`);
+      } else {
+        alert('Recursos insuficientes para criar a foice.');
+      }
+    };
+
+
+    // Renderizar slots do baú
+    function renderChestSlots() {
+      chestSlotsDiv.innerHTML = '';
+      for (let i = 0; i < activeChest.size; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'slot' + (i === chestSelected ? ' selected' : '');
+        slot.style.margin = '4px';
+        slot.style.width = '48px';
+        slot.style.height = '48px';
+        slot.style.background = '#ccc';
+        slot.style.position = 'relative';
+
+        const item = chestInventories[activeChest.id][i];
+        if (item) {
+          const img = document.createElement('img');
+          img.src = imgs[item.type].src;
+          img.style.width = '100%';
+          img.style.height = '100%';
+          slot.appendChild(img);
+
+          const count = document.createElement('span');
+          count.textContent = item.count;
+          Object.assign(count.style, {
+            position: 'absolute',
+            bottom: '0',
+            right: '0',
+            background: 'rgba(0,0,0,0.5)',
+            color: '#fff'
+          });
+          slot.appendChild(count);
+        }
+
+        slot.addEventListener('click', () => {
+          chestSelected = i;
+          updateSwapButton();
+          renderChestSlots();  // re-render para atualizar a classe "selected"
+        });
+
+        chestSlotsDiv.appendChild(slot);
+      }
+
+      document.getElementById('btnUpgradeChest').style.display =
+        activeChest && activeChest.level < 3 ? 'inline-block' : 'none';
+    }
+
+    // Variáveis de seleção
+    let chestSelected = null;
+    let playerSelected = null; // já usa player.selected
+
+    function updateSwapButton() {
+      btnSwap.disabled = (
+        activeChest === null
+        || chestSelected === null
+        || player.selected === null
+        || !chestInventories[activeChest.id][chestSelected]  // sem item no slot do baú
+        && !player.inventory[player.selected]               // e sem item no slot do player
+      );
+    }
+
+
+    btnSwap.onclick = () => {
+      if (!activeChest || chestSelected === null || player.selected === null) return;
+
+      const inv = chestInventories[activeChest.id];
+      const pIdx = player.selected;
+      const cIdx = chestSelected;
+      const pItem = player.inventory[pIdx] || null;
+      const cItem = inv[cIdx] || null;
+
+      // Se os dois slots estiverem vazios, não faz nada
+      if (!pItem && !cItem) return;
+
+      // 1) Coloca o item do baú no inventário do player
+      if (cItem) {
+        player.inventory[pIdx] = cItem;
+      } else {
+        // se o baú não tinha item, limpa o slot do player
+        player.inventory[pIdx] = null;
+      }
+
+      // 2) Coloca o item do player no baú
+      inv[cIdx] = pItem || null;
+
+      // 3) Compacta o inventário (remove todos os nulls)
+      player.inventory = player.inventory.filter(slot => slot !== null);
+
+      // 4) Preenche com nulls até invSize
+      while (player.inventory.length < player.invSize) {
+        player.inventory.push(null);
+      }
+
+      // Atualiza HUD, slots do baú e estado do botão
+      updateHUD();
+      renderChestSlots();
+      updateSwapButton();
+    };
+
+
+
+    function compactInventory() {
+      player.inventory = player.inventory.filter(slot => slot !== null);
+    }
+
+    function ensureInventorySize() {
+      compactInventory();
+      while (player.inventory.length < player.invSize) {
+        player.inventory.push(null);
+      }
+    }
+
+
+    function updateToolHUD() {
+      let txt;
+      if (!player.tool) {
+        txt = 'Nenhuma';
+      } else {
+        // Mapeia cada id para o nome que será mostrado
+        const names = {
+          axe: 'Machado',
+          sword: 'Espada',
+          sickle: 'Foice'
+        };
+        const displayName = names[player.tool] || player.tool;
+        txt = `${displayName} (Dur: ${player.toolDur})`;
+      }
+      document.getElementById('toolHUD').innerText = 'Ferramenta: ' + txt;
+    }
+
+    const plantFuelEl = document.getElementById('plantFuel');
+    const plantCraftEl = document.getElementById('plantCraftIn');
+    const plantOutputEl = document.getElementById('plantOutput');
+
+    function clearPlantSelection() {
+      [plantFuelEl, plantCraftEl, plantOutputEl].forEach(el => el.classList.remove('selected'));
+    }
+
+    // Ao clicar em cada slot, marca seleção
+    plantFuelEl.addEventListener('click', () => {
+      clearPlantSelection();
+      plantFuelEl.classList.add('selected');
+      plantSelectedSlot = 'fuel';
+    });
+
+    plantCraftEl.addEventListener('click', () => {
+      clearPlantSelection();
+      plantCraftEl.classList.add('selected');
+      plantSelectedSlot = 'craftIn';
+    });
+
+    plantOutputEl.addEventListener('click', () => {
+      clearPlantSelection();
+      plantOutputEl.classList.add('selected');
+      plantSelectedSlot = 'output';
+    });
+
+    const PLANT = {
+      id: 'plant',
+      type: 'machine',
+      name: 'Usina',
+      img: 'https://img.freepik.com/premium-vector/pixel-art-factory-building-with-smoke-from-chimneys_1292377-12397.jpg',
+      cost: { wood: 30, rockSmall: 30, potion: 1, rope: 4 },
+      slots: {
+        fuel: null,  // aceita: leaf (5s), wood (60s)
+        craftIn: null,  // aceita leaf (3→1 rope em 30s) ou fiber (1→2 ropes)
+        output: null,
+      },
+      timers: {
+        fuelRemaining: 0,
+        craftTimer: 0,
+      }
+    };
+
+    document.getElementById('btnClosePlant').onclick = () => {
+      plantPanel.style.display = 'none';
+      activePlant = null;
+    };
+
+
+    document.getElementById('craftPlant').onclick = () => {
+      if (totalCount('wood') >= 30 && totalCount('rockSmall') >= 30
+        && totalCount('potion') >= 1 && totalCount('rope') >= 4) {
+        removeItem('wood', 30);
+        removeItem('rockSmall', 30);
+        removeItem('potion', 1);
+        removeItem('rope', 4);
+        const plant = {
+          ...PLANT,
+          x: player.x, y: player.y,
+          uid: Date.now(),  // id único
+          upgraded: false,  // ← novo campo
+          slots: { fuel: null, craftIn: null, output: null },
+          timers: { fuelRemaining: 0, craftTimer: 0 }
+        };
+        objects.push(plant);
+        alert('Usina construída e spawnada!');
+      } else alert('Recursos insuficientes.');
+    };
+
+    let activePlant = null;
+
+    function toggleFullScreen() {
+      const btn = document.getElementById('startGameBtn');
+
+      if (
+        !document.fullscreenElement &&
+        !document.webkitFullscreenElement &&
+        !document.mozFullScreenElement &&
+        !document.msFullscreenElement
+      ) {
+        const el = document.documentElement;
+        if (el.requestFullscreen) el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        else if (el.msRequestFullscreen) el.msRequestFullscreen();
+        btn.textContent = 'Sair da Tela Cheia';
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+        btn.textContent = 'Tela Cheia';
+      }
+    }
+
+    // Garante que o texto muda mesmo se fullscreen for alterado fora do botão
+    document.addEventListener('fullscreenchange', () => {
+      const btn = document.getElementById('startGameBtn');
+      if (document.fullscreenElement) {
+        btn.textContent = 'Sair da Tela Cheia';
+      } else {
+        btn.textContent = 'Tela Cheia';
+      }
+    });
+
+    document.getElementById('startGameBtn').addEventListener('click', () => {
+      toggleFullScreen();
+    });
+
+
+    btnOpenPlant.onclick = () => {
+      // se não há usina próxima, não faz nada
+      if (!nearbyPlant) return;
+      // aqui: define qual é a usina ativa
+      activePlant = nearbyPlant;
+      // então mostra o painel
+      plantPanel.style.display = 'block';
+      renderPlantSlots();
+    };
+
+    document.getElementById('btnClosePlant').onclick = () => {
+      plantPanel.style.display = 'none';
+      activePlant = null;
+    };
+
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+
+    function renderPlantSlots() {
+      ['fuel', 'craftIn', 'output'].forEach(slot => {
+        const el = document.getElementById('plant' + capitalize(slot));
+        const it = activePlant.slots[slot];
+        el.innerHTML = it ? `<img src="${imgs[it.type].src}" /><span>${it.count}</span>` : '';
+      });
+
+      document.getElementById('btnUpgradePlant').style.display =
+        activePlant && !activePlant.upgraded ? 'block' : 'none';
+
+    }
+
+    let plantSelectedSlot = null;
+    document.querySelectorAll('#plantPanel .slot').forEach(el => {
+      el.onclick = () => {
+        plantSelectedSlot = el.dataset.slot;
+        // adicionar classe “selected” visual…
+      };
+    });
+
+    document.getElementById('btnUpgradePlant').onclick = () => {
+      if (totalCount('potion') < 1) {
+        alert('Você precisa de 1 poção para fazer o upgrade!');
+        return;
+      }
+
+      removeItem('potion', 1);
+      activePlant.upgraded = true;
+      alert('Usina aprimorada! Agora ela funciona mesmo à distância.');
+      renderPlantSlots();
+    };
+
+
+    // 4) Swap com o inventário do player
+    document.getElementById('btnSwapPlant').addEventListener('click', () => {
+      if (!activePlant || !plantSelectedSlot) return;
+
+      const pIdx = player.selected;
+      const pItem = player.inventory[pIdx] || null;
+      const mItem = activePlant.slots[plantSelectedSlot] || null;
+
+      const pType = pItem?.type;
+
+      // 🔒 Validações
+      if (plantSelectedSlot === 'fuel' && pItem && !['leaf', 'wood'].includes(pType)) {
+        return alert('❌ Apenas folha ou madeira como combustível!');
+      }
+      if (plantSelectedSlot === 'craftIn' && pItem && !['leaf', 'fiber'].includes(pType)) {
+        return alert('❌ Apenas folha ou fibra como matéria-prima!');
+      }
+
+      // ✅ REMOVE do inventário corretamente
+      if (pItem) {
+        player.inventory.splice(pIdx, 1);
+        compactInventory();
+        ensureInventorySize();
+      }
+
+      // ✅ DEVOLVE o item da usina (se existir)
+      if (mItem) {
+        giveItem(mItem.type, mItem.count);
+      }
+
+      // ✅ Clona o item para a usina
+      activePlant.slots[plantSelectedSlot] =
+        (pItem && pItem.count > 0)
+          ? { type: pItem.type, count: pItem.count }
+          : null;
+
+
+      // ✅ Interface
+      clearPlantSelection();
+      plantSelectedSlot = null;
+      updateHUD();
+      renderPlantSlots();
+    });
+
+
+    function giveToMachineOutput(machine, type, qty) {
+      let out = machine.slots.output;
+      if (!out) machine.slots.output = { type, count: qty };
+      else if (out.type === type) out.count = Math.min(99, out.count + qty);
+      // senão, ignora (não mescla tipos diferentes)
+    }
+
+    let joystickTouchId = null;
+
+    function updateMovement() {
+      let speed = player.moveSpeed;
+      let dx = 0, dy = 0;
+
+      // Movimento com as teclas
+      if (keys['w'] || keys['ArrowUp']) dy -= 1;
+      if (keys['s'] || keys['ArrowDown']) dy += 1;
+      if (keys['a'] || keys['ArrowLeft']) dx -= 1;
+      if (keys['d'] || keys['ArrowRight']) dx += 1;
+
+      // Movimento com o joystick (usando a direção do joystick)
+      dx += joystickDirection.dx; // Atualiza a direção X com base no joystick
+      dy += joystickDirection.dy; // Atualiza a direção Y com base no joystick
+
+      // Normaliza a direção para evitar que a velocidade aumente
+      let magnitude = Math.hypot(dx, dy);
+      if (magnitude > 1) {
         dx /= magnitude;
         dy /= magnitude;
-    }
+      }
 
-    // Se houver movimento (no teclado ou no joystick)
-    if (dx !== 0 || dy !== 0) {
+      // Se houver movimento (no teclado ou no joystick)
+      if (dx !== 0 || dy !== 0) {
         let angle = Math.atan2(dy, dx); // Calcula o ângulo com base na direção
         let newX = player.x + Math.cos(angle) * speed;
         let newY = player.y + Math.sin(angle) * speed;
 
         // Checa se a nova posição é válida (sem colisões)
         if (Math.hypot(newX, newY) < islandRadius && !checkCollision(newX, newY)) {
-            player.x = newX;
-            player.y = newY;
+          player.x = newX;
+          player.y = newY;
         }
-    }
-}
-
-
-// Intervalo de regeneração: +10 de vida a cada 10s, se estiver abaixo de 100
-const regenInterval = setInterval(() => {
-  if (
-    player.health > 0 &&
-    player.health < 100 &&
-    Date.now() - lastDamageTime >= 20000  // 20 000 ms = 20 s
-  ) {
-    player.health = Math.min(100, player.health + 10);
-    updateBars();
-  }
-}, 10000);
-
-
-// --- Decaimento Fome/Sede ---
-const thirstDecay = 5*60*1000/100; // ms per 1%
-const hungerDecay = 8*60*1000/100;
-let hungerInterval = setInterval(decayHunger, hungerDecay);
-let thirstInterval = setInterval(decayThirst, thirstDecay);
-
-function decayHunger() {
-  player.hunger = Math.max(0, player.hunger - 1);
-  updateBars();
-}
-function decayThirst() {
-  player.thirst = Math.max(0, player.thirst - 1);
-  updateBars();
-}
-
-
-// --- Input ---
-window.addEventListener('keydown', e=>{
-  if(e.key==='j' || e.key==='J') attack();
-  if(e.key==='c' || e.key==='C') consume(); // <- Adicionado
-  if('1234567890'.includes(e.key)){
-    let idx = parseInt(e.key)-1;
-    if(idx<player.invSize){ player.selected=idx; updateHUD(); }
-  }
-});
-
-
-// --- Botões ---
-const btnAttack = document.getElementById('btnAttack');
-document.getElementById('btnAttack').onclick = attack;
-document.getElementById('btnCraft').onclick = ()=>{
-  document.getElementById('craftPanel').style.display = 
-    document.getElementById('craftPanel').style.display==='none'?'block':'none';
-};
-document.getElementById('craftAxe').addEventListener('click', () => {
-  // 1) Veja se o listener está mesmo sendo chamado:
-  console.log('⪢ craftAxe clicado');
-
-  // 2) Veja exatamente o que o getItem está retornando:
-  const rocks = getItem('rockSmall');
-  const wood  = getItem('wood');
-  console.log('   → rockSmall.count =', rocks?.count, 'wood.count =', wood?.count);
-
-  const rcount = rocks?.count || 0;
-  const wcount = wood?.count  || 0;
-  if (rcount >= 5 && wcount >= 10) {
-    console.log('   → Recursos OK! Craftando machado…');
-    removeItem('rockSmall', 5);
-    removeItem('wood', 10);
-    player.tool = 'axe';
-    player.toolDur = 20;
-    updateHUD();
-    console.log('   → player.tool set to', player.tool, 'toolDur =', player.toolDur);
-    alert('Craftou machado de pedra!');
-  } else {
-    console.log('   → Recursos insuficientes no momento do clique');
-    alert('Recursos insuficientes.');
-  }
-});
-
-// disparar no clique normal (desktop)…
-btnAttack.addEventListener('click', attack);
-// …e também no toque (mobile)
-btnAttack.addEventListener('touchstart', e => {
-  e.preventDefault();  // opcional, evita geração dupla de eventos
-  attack();
-});
-
-document.getElementById('craftSword').onclick = () => {
-  let wood = getItem('wood')?.count || 0;
-  let rock = getItem('rockSmall')?.count || 0;
-  if (wood >= swordStats.cost.wood && rock >= swordStats.cost.rockSmall) {
-    removeItem('wood', swordStats.cost.wood);
-    removeItem('rockSmall', swordStats.cost.rockSmall);
-    player.tool    = 'sword';
-    player.toolDur = 35;      // agora a espada tem durabilidade 35
-    alert('Você craftou a Espada de Pedra! Durabilidade: 35');
-    updateHUD();
-  } else {
-    alert('Recursos insuficientes para craftar a espada.');
-  }
-};
-
-
-
-document.getElementById('craftPack').onclick = () => {
-  // 1) Se já tiver mochila, bloqueia tudo e não consome nada:
-  if (player.backpackLevel >= 0) {
-    alert('Você já possui uma mochila!');
-    return;
-  }
-
-  // 2) Só aqui embaixo verificamos recursos e consumimos:
-  const ropes = getItem('rope')?.count || 0;
-  const wood  = getItem('wood')?.count || 0;
-
-  if (ropes >= 20 && wood >= 10) {
-    // consome recursos
-    removeItem('rope', 20);
-    removeItem('wood', 10);
-
-    // cria a mochila pela primeira vez
-    player.backpackLevel = 0;
-    player.invSize       = 6;      // nível 0 = 6 slots
-    ensureInventorySize();         // ajusta o array inventory
-    updateHUD();                   // redesenha o HUD
-
-    alert(`Mochila criada! Você tem ${player.invSize} slots agora.`);
-  } else {
-    alert('Recursos insuficientes para criar a mochila.');
-  }
-};
-
-
-
-document.getElementById('craftFiber').onclick = () => {
-  let leaves = getItem('leaf');
-  if (leaves && leaves.count >= 6) {
-    removeItem('leaf', 6);
-    giveItem('fiber', 1);
-    updateHUD();
-    alert('Fibra criada!');
-  } else {
-    alert('Folhas insuficientes para criar fibra.');
-  }
-};
-
-document.getElementById('craftRope').onclick = () => {
-  let fibers = getItem('fiber');
-  if (fibers && fibers.count >= 3) {
-    removeItem('fiber', 3);
-    giveItem('rope', 1);
-    updateHUD();
-    alert('Corda criada!');
-  } else {
-    alert('Fibras insuficientes para criar corda.');
-  }
-};
-
-function checkCollision(newX, newY) {
-  for (let o of objects) {
-    if (['tree','manualtree','rockBig'].includes(o.type)) {
-      let dist = Math.hypot(o.x - newX, o.y - newY);
-      let radius = o.type==='tree' ? 50 : 40;
-      if (dist < radius + player.size) return true;
-    }
-  }
-  return false;
-}
-
-// --- Joystick ---
-// Variáveis do joystick
-let joystick = document.getElementById('joystick');
-let stick = document.getElementById('stick');
-let joystickRadius = joystick.offsetWidth / 2;
-let maxStickDistance = joystickRadius - stick.offsetWidth / 2; // Distância máxima que o stick pode se mover
-
-let joystickDirection = { dx: 0, dy: 0 }; // Direção do joystick
-let joystickCenter = { x: joystick.getBoundingClientRect().left + joystickRadius,
-  y: joystick.getBoundingClientRect().top  + joystickRadius };
-
-
-
-function getJoystickCenter() {
-  const rect = joystick.getBoundingClientRect();
-  return {
-    x: rect.left + rect.width / 2,
-    y: rect.top + rect.height / 2
-  };
-}
-
-function centerStick() {
-  const joystickRadius = joystick.offsetWidth / 2;
-  stick.style.transform = `translate(${joystickRadius - stick.offsetWidth / 2}px, ${joystickRadius - stick.offsetHeight / 2}px)`;
-}
-centerStick();
-
-// Função para atualizar a posição do stick
-function updateStickPosition(x, y) {
-  // limita ao raio
-  let dist = Math.hypot(x, y);
-  if (dist > maxStickDistance) {
-    const a = Math.atan2(y, x);
-    x = Math.cos(a) * maxStickDistance;
-    y = Math.sin(a) * maxStickDistance;
-  }
-
-  // parte fixa (-13px,-13px) + deslocamento
-  stick.style.transform =
-    `translate(calc(-13px + ${x}px), calc(-13px + ${y}px))`;
-
-  joystickDirection = { dx: x / maxStickDistance, dy: y / maxStickDistance };
-}
-
-function upgradeBackpack() {
-  // Verifica se o jogador já possui mochila
-  if (player.backpackLevel === undefined || player.backpackLevel < 0) {
-    alert('Você precisa primeiro criar uma mochila!');
-    return;
-  }
-
-  // Se o jogador já tiver uma mochila no nível máximo, não permite upgrade
-  const nextLevel = player.backpackLevel + 1;
-  if (nextLevel > maxBackpackLevel) {
-    alert('Sua mochila já está no nível máximo (10 slots)!');
-    return;
-  }
-
-  // Obtém o custo do upgrade
-  const cost = backpackCosts[nextLevel];
-  const haveWood = getItem('wood')?.count || 0;
-  const haveRope = getItem('rope')?.count || 0;
-
-  // Verifica se o jogador tem recursos suficientes para o upgrade
-  if (haveWood < (cost.wood || 0) || haveRope < (cost.rope || 0)) {
-    alert('Recursos insuficientes para upgrade da mochila.');
-    return;
-  }
-
-  // Remove os recursos necessários para o upgrade
-  if (cost.wood) removeItem('wood', cost.wood);
-  if (cost.rope) removeItem('rope', cost.rope);
-
-  // Define a quantidade de slots conforme o próximo nível
-  let newSize;
-  if (nextLevel === 0) {
-    newSize = 6;  // Nível 0 dá 6 slots (ajuste se precisar ser 2 slots)
-  } else {
-    newSize = 6 + nextLevel;  // Cada nível superior dá 1 slot a mais
-  }
-
-  // Atualiza o nível da mochila e o tamanho do inventário
-  player.invSize = newSize;
-  player.backpackLevel = nextLevel;
-  ensureInventorySize();  // Ajusta o tamanho do inventário
-  updateHUD();  // Atualiza a interface (HUD)
-
-  alert(`Mochila upgradeada para nível ${nextLevel}: ${newSize} slots.`);
-}
-
-
-// Linca o botão ao handler
-document.getElementById('btnUpgradePack').onclick = upgradeBackpack;
-
-// Função para iniciar o toque ou mouse
-function startJoystick(event) {
-  event.preventDefault();
-
-  // 1. Pega a primeira touch (ou o evento de mouse) e armazena o identifier
-  const firstTouch = event.touches ? event.touches[0] : event;
-  joystickTouchId   = firstTouch.identifier;
-
-  // 2. Recalcula o centro do joystick
-  const rect = joystick.getBoundingClientRect();
-  joystickCenter = {
-    x: rect.left + rect.width  / 2,
-    y: rect.top  + rect.height / 2
-  };
-
-  // 3. Move o stick até onde tocou
-  const dx = firstTouch.clientX - joystickCenter.x;
-  const dy = firstTouch.clientY - joystickCenter.y;
-  updateStickPosition(dx, dy);
-
-  // 4. Só aqui adiciona os listeners de movimento e fim de toque
-  window.addEventListener('touchmove', moveJoystick);
-  window.addEventListener('mousemove',  moveJoystick);
-  window.addEventListener('touchend',   endJoystick);
-  window.addEventListener('mouseup',    endJoystick);
-}
-
-
-
-
-// Função para mover o stick
-function moveJoystick(event) {
-  // só reage à mesma touch
-  const touch = event.touches
-    ? Array.from(event.touches).find(t => t.identifier === joystickTouchId)
-    : event;
-  if (!touch) return;
-  const dx = touch.clientX - joystickCenter.x;
-  const dy = touch.clientY - joystickCenter.y;
-  updateStickPosition(dx, dy);
-}
-
-// Função para finalizar o toque ou mouse
-function endJoystick(event) {
-  // só solta se for a mesma touch que começou
-  if (event.changedTouches) {
-    const ended = Array.from(event.changedTouches)
-      .some(t => t.identifier === joystickTouchId);
-    if (!ended) return;
-  }
-
-  // reset
-  stick.style.transform     = 'translate(-13px, -13px)';
-  joystickDirection         = { dx: 0, dy: 0 };
-  const rect                = joystick.getBoundingClientRect();
-  joystickCenter            = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
-  joystickTouchId           = null;
-
-  window.removeEventListener('touchmove', moveJoystick);
-  window.removeEventListener('mousemove',  moveJoystick);
-  window.removeEventListener('touchend',   endJoystick);
-  window.removeEventListener('mouseup',    endJoystick);
-}
-
-
-// Adiciona eventos para toque e clique do mouse
-joystick.addEventListener('touchstart', startJoystick);
-joystick.addEventListener('mousedown', startJoystick);
-// --- Função de Ataque ---
-function attack() {
-  console.log('===== INVOCANDO ATTACK() =====');
-  console.log('  Ferramenta:', player.tool, 'Durabilidade:', player.toolDur);
-
-
-  let dmg   = 15;
-  let toolBonus = 0;
-
-// … e usa effectiveReach no lugar de reach …
-
-
-  // Ajusta dano e alcance conforme ferramenta
-  if (player.tool === 'axe') {
-    dmg      = 35;
-    toolBonus = 40;   // machado dá +40px de alcance
-  } else if (player.tool === 'sword') {
-    dmg      = 80;
-    toolBonus = 80;   // espada dá +80px de alcance
-  }
-  else if (player.tool === 'sickle') {
-  // mesma lógica do machado, mas dura mais
-  dmg       = SICKLE.damage;       // 35
-  toolBonus = SICKLE.reachBonus;   // 40
-  }
-
-  const effectiveReach = (baseReach + toolBonus) * reachMultiplier;
-  animCircle(effectiveReach);
-
-  // 1) Ataca objetos do mundo
-  for (let i = objects.length - 1; i >= 0; i--) {
-    const o    = objects[i];
-        // <<< PULA USINA, BAÚ E PAPAGAIO >>>
-    if (o.type === 'magicparrot' || o.type === 'machine' || o.type === 'chest') {
-      continue;
-    }
-    const dist = Math.hypot(o.x - player.x, o.y - player.y);
-    if (dist > effectiveReach) continue;
-    console.log(`  → Objeto ao alcance: ${o.type} (hp=${o.hp}), dist=${dist.toFixed(1)}`);
-    // ← Exige machado apenas para árvores e pedras grandes (hp > 1)
-    if ((o.type === 'tree' || o.type === 'rockBig') && player.tool !== 'axe') {
-      console.log('    • Ignorado: precisa de machado');
-    continue;
-    }
-
-    if (o.type === 'bush' && player.tool === 'sickle') {
-  const base = Math.floor(Math.random()*(8-4+1))+4;
-  const mult = potionActive ? 6 : 3;
-  giveItem('leaf', base*mult);
-  // "mata" o arbusto e deixa ele seguir pro bloco de remoção
-  o.hp = 0;
-  // sem o continue, cai no próximo if(o.hp<=0)
-}
-
-    // Aplica dano
-    console.log(`    • Aplicando dano ${dmg}`);
-    const hpAntes = o.hp;
-    o.hp -= dmg;
-    console.log(`    • HP antes=${hpAntes}, depois=${o.hp}`);
-
-    
-    // Reduz durabilidade se for ferramenta
-    if (player.tool === 'axe' || player.tool === 'sword' || player.tool === 'sickle') {
-  const durAntes = player.toolDur;
-  player.toolDur--;
-  console.log(`    • Durabilidade antes=${durAntes}, depois=${player.toolDur}`);
-  if (player.toolDur <= 0) {
-    const name = player.tool === 'axe' ? 'machado'
-               : player.tool === 'sword' ? 'espada'
-               : 'foice';
-    alert(`Sua ${name} quebrou!`);
-    player.tool = null;
-    player.toolDur = 0;
-  }
-}
-
-    // Se o objeto morreu, faz drop e respawn
-    if (o.hp <= 0) {
-      const tipo = o.type;
-      const hpMax = o.hpMax || (tipo === 'bush' ? 1 : 5);
-
-      switch (tipo) {
-  case 'tree':
-    giveItem('coconut', randInt(2, 6) * dropMultipliers.coconut);
-    giveItem('wood',     randInt(8, 14) * dropMultipliers.wood);
-    giveItem('leaf',     randInt(12,18) * dropMultipliers.leaf);
-    if (Math.random() < 0.20) giveItem('seeds', 1 * dropMultipliers.seeds);
-    break;
-
-  case 'manualtree':
-    giveItem('coconut', randInt(2,6) * dropMultipliers.coconut);
-    giveItem('wood',     randInt(8,14) * dropMultipliers.wood);
-    giveItem('leaf',     randInt(12,18) * dropMultipliers.leaf);
-      // 20% de chance de soltar 1 semente, igual à árvore normal
-    if (Math.random() < 0.20) {
-      giveItem('seeds', 1 * dropMultipliers.seeds);
-    }
-    break;
-
-    case 'bush':
-  if (!o.harvested) {
-    o.harvested = true;
-    // frutas 8–12 × dropMultipliers.fruit (1× sem poção, 2× com poção)
-    giveItem('fruit', randInt(8,12) * dropMultipliers.fruit);
-    giveItem('leaf', randInt(4,8) * dropMultipliers.leaf);
-  }
-  break;
-
-  case 'rockBig':
-    giveItem('rockSmall', 10 * dropMultipliers.rockSmall);
-    break;
-
-  case 'rockSmall':
-    giveItem('rockSmall', 1 * dropMultipliers.rockSmall);
-    break;
-
-  case 'stick':
-    giveItem('wood', 1 * dropMultipliers.wood);
-    break;
-}
-
-      objects.splice(i, 1);
-      // respawn após atraso
-      let delay = (tipo==='tree'||tipo==='rockBig') ? 5*60*1000
-                : (tipo==='bush') ? 8*60*1000
-                : 12*60*1000;
-
-      if (!o.noRespawn) {
-        setTimeout(() => spawnOnLand(tipo, hpMax), delay);
       }
     }
-  }
-
-  // 2) Ataca leões (se existir array lions)
-  if (typeof lions !== 'undefined') {
-    for (let i = lions.length - 1; i >= 0; i--) {
-      const l    = lions[i];
-      const dist = Math.hypot(l.x - player.x, l.y - player.y);
-      if (dist > effectiveReach) continue;
-
-      l.hp -= dmg;
-      console.log(`🦁 Leão atingido! Dano: ${dmg}, HP restante: ${l.hp.toFixed(1)}`);
-
-      // Reduz durabilidade ao atacar leão
-if (player.tool === 'axe' || player.tool === 'sword' || player.tool === 'sickle') {
-  player.toolDur--;
-  console.log(`    • Durabilidade antes e depois: ${player.toolDur + 1} → ${player.toolDur}`);
-  if (player.toolDur <= 0) {
-    const name = player.tool === 'axe'   ? 'machado'
-               : player.tool === 'sword' ? 'espada'
-               :                            'foice';
-    alert(`Sua ${name} quebrou!`);
-    player.tool    = null;
-    player.toolDur = 0;
-  }
-}
 
 
-      if (l.hp <= 0) {
-
-        if (Math.random() < 0.4) {
-          giveItem('zoomPotion', 1);
-        alert('🍃 Você encontrou uma Poção de Zoom!');
-        }
-
-        lions.splice(i, 1);
-        console.log('💀 Leão morreu!');
+    // Intervalo de regeneração: +10 de vida a cada 10s, se estiver abaixo de 100
+    const regenInterval = setInterval(() => {
+      if (
+        player.health > 0 &&
+        player.health < 100 &&
+        Date.now() - lastDamageTime >= 20000  // 20 000 ms = 20 s
+      ) {
+        player.health = Math.min(100, player.health + 10);
+        updateBars();
       }
-    }
-  }
-
-  updateHUD();
-}
-
-function spawnLions() {
-  let n = Math.floor(Math.random() * 5) + 2;
-  for (let i = 0; i < n; i++) {
-    let x, y, attempts = 0;
-    do {
-      x = Math.random() * islandRadius * 2 - islandRadius;
-      y = Math.random() * islandRadius * 2 - islandRadius;
-      attempts++;
-      // Se em 10 tentativas não achar, joga no centro
-      if (attempts > 10) { x = 0; y = 0; break; }
-    } while (Math.hypot(x, y) > islandRadius);
-
-    lions.push({
-      x,
-      y,
-      hp:    650,
-      speed: 1.3 * 2
-    });
-  }
-}
+    }, 10000);
 
 
-function despawnLions() {
-  lions.length = 0;
-}
+    // --- Decaimento Fome/Sede ---
+    const thirstDecay = 5 * 60 * 1000 / 100; // ms per 1%
+    const hungerDecay = 8 * 60 * 1000 / 100;
+    let hungerInterval = setInterval(decayHunger, hungerDecay);
+    let thirstInterval = setInterval(decayThirst, thirstDecay);
 
-
-// Intervalo para dano de leão: 20 de HP por segundo, com redução de armadura
-const lionDamageInterval = setInterval(() => {
-  lions.forEach(l => {
-    const dist = Math.hypot(l.x - player.x, l.y - player.y);
-    const touchDistance = player.size + 32;
-    if (dist <= touchDistance) {
-      // dano bruto
-      const raw = 20;
-      // aplica redução (0.40 = 40% se armadura equipada)
-      const actual = Math.round(raw * (1 - (player.damageReduction || 0)));
-      player.health = Math.max(0, player.health - actual);
-
-      if (player.armor && player.armorDur > 0) {
-        player.armorDur--;
-        if (player.armorDur <= 0) {
-          player.armor = null;
-          player.armorDur = 0;
-          player.armorDurMax = 0;
-          player.damageReduction -= 0.60;
-          player.moveSpeed /= 1.20;
-          alert('Sua Armadura quebrou!');
-        }
-        updateArmorHUD();
-      }
-
-
-      lastDamageTime = Date.now();
+    function decayHunger() {
+      player.hunger = Math.max(0, player.hunger - 1);
       updateBars();
+    }
+    function decayThirst() {
+      player.thirst = Math.max(0, player.thirst - 1);
+      updateBars();
+    }
 
-      if (player.health === 0) {
-        clearInterval(regenInterval);
-        clearInterval(lionDamageInterval);
-        // opcional: clearInterval(damageInterval);
-        endGame();
+
+    // --- Input ---
+    window.addEventListener('keydown', e => {
+      if (e.key === 'j' || e.key === 'J') attack();
+      if (e.key === 'c' || e.key === 'C') consume(); // <- Adicionado
+      if ('1234567890'.includes(e.key)) {
+        let idx = parseInt(e.key) - 1;
+        if (idx < player.invSize) { player.selected = idx; updateHUD(); }
       }
-    }
-  });
-}, 1000);
+    });
 
 
+    // --- Botões ---
+    const btnAttack = document.getElementById('btnAttack');
+    document.getElementById('btnAttack').onclick = attack;
+    document.getElementById('btnCraft').onclick = () => {
+      document.getElementById('craftPanel').style.display =
+        document.getElementById('craftPanel').style.display === 'none' ? 'block' : 'none';
+    };
+    document.getElementById('craftAxe').addEventListener('click', () => {
+      // 1) Veja se o listener está mesmo sendo chamado:
+      console.log('⪢ craftAxe clicado');
 
-const damageInterval = setInterval(() => {
-  if (player.hunger === 0 || player.thirst === 0) {
-    player.health = Math.max(0, player.health - 10);
-    lastDamageTime = Date.now();     // marca o momento do dano
-    updateBars();
-    if (player.health === 0) {
-      clearInterval(damageInterval);
-      clearInterval(regenInterval);
-      endGame();
-    }
-  }
-}, 1000);
-// --- Animação do círculo de ataque ---
-let circleAnim = null;
-function animCircle(r){
-  circleAnim={r,alpha:1};
-  setTimeout(()=>circleAnim=null,300);
-}
+      // 2) Veja exatamente o que o getItem está retornando:
+      const rocks = getItem('rockSmall');
+      const wood = getItem('wood');
+      console.log('   → rockSmall.count =', rocks?.count, 'wood.count =', wood?.count);
 
-function getDefaultHP(type) {
-  switch (type) {
-    case 'tree': return 100;
-    case 'rockBig': return 100;
-    case 'bush': return 1;
-    default: return 1;
-  }
-}
-
-let potionActive = false;
-let potionCooldown = false;
-let potionCooldownTime = 0;      // em segundos
-let potionCooldownInterval = null;
-
-function updatePotionCooldownDisplay() {
-  const m = String(Math.floor(potionCooldownTime / 60)).padStart(2, '0');
-  const s = String(potionCooldownTime % 60).padStart(2, '0');
-  document.getElementById('potionCooldown').innerText = `Cooldown: ${m}:${s}`;
-}
-
-
-
-
-function applyPotionBuff() {
-  if (potionActive || potionCooldown) {
-    alert('Ainda em cooldown!');
-    return;
-  }
-  potionActive = true;
-  // Salva estados
-  reachMultiplier = 2;
-  const savedDrops = { ...dropMultipliers };
-
-  // 1) Exibe barra e reseta largura
-const barContainer = document.getElementById('potionBarContainer');
-const barFill      = document.getElementById('potionBarFill');
-barContainer.style.display = 'block';
-barFill.style.transition = 'width 0s';
-barFill.style.width = '100%';
-
-// força reflow para pegar o 100% inicial antes de animar
-void barFill.offsetWidth;
-
-// 2) Anima para 0% em 160 000 ms (2 min 40 s)
-barFill.style.transition = 'width 160s linear';  // 160s = 2m40s
-barFill.style.width = '0%';
-
-barFill.addEventListener('transitionend', function onEnd(e) {
-  if (e.propertyName === 'width') {
-    barContainer.style.display = 'none';
-    barFill.removeEventListener('transitionend', onEnd);
-  }
-});
-
-  // Efeito imediato
-  player.health = Math.min(100, player.health + 40);
-  updateBars();
-  player.moveSpeed *= 1.4;
-  Object.keys(dropMultipliers).forEach(k => dropMultipliers[k] = 2);
-
-  clearInterval(hungerInterval);
-  clearInterval(thirstInterval);
-
-  // dentro de applyPotionBuff():
-
-  // Duração: 160_000ms
-  setTimeout(() => {
-    // Reverte
-    player.moveSpeed /= 1.4;
-    reachMultiplier = 1;
-    Object.assign(dropMultipliers, savedDrops);
-
-    // Reinicia decaimento
-    hungerInterval = setInterval(decayHunger, hungerDecay);
-    thirstInterval = setInterval(decayThirst, thirstDecay);
-
-    potionActive = false;
-    potionCooldown = true;
-    startPotionCooldown();       // inicia e mostra o contador
-
-    barContainer.style.display = 'none';
-    // Cooldown 5min
-    setTimeout(() => potionCooldown = false, 5*60*1000);
-  }, 160000);
-}
-
-
-
-/** Inicia o cooldown de 5 min e mostra o contador */
-function startPotionCooldown() {
-  potionCooldownTime = 5 * 60;    // 5 minutos
-  const cdEl = document.getElementById('potionCooldown');
-  cdEl.style.display = 'block';
-  updatePotionCooldownDisplay();
-
-  // limpa qualquer intervalo anterior
-  clearInterval(potionCooldownInterval);
-  potionCooldownInterval = setInterval(() => {
-    potionCooldownTime--;
-    if (potionCooldownTime <= 0) {
-      clearInterval(potionCooldownInterval);
-      potionCooldown = false;
-      cdEl.style.display = 'none';
-    } else {
-      updatePotionCooldownDisplay();
-    }
-  }, 1000);
-}
-
-function consumeZoomPotion() {
-  if (potionCooldown) { alert('Ainda em cooldown!'); return; }
-
-  // 4× de zoom out:
-  zoomFactor = 0.25;
-
-  // dura, por exemplo, 60 s:
-  setTimeout(() => {
-    zoomFactor = 1;  // volta ao normal
-  }, 60 * 1000);
-
-  // aqui você também aciona o cooldown, decrementa o item do inventário etc.
-}
-
-
-
-function getItem(type) {
-  return player.inventory.find(i => i && i.type === type) || null;
-}
-
-function giveItem(type, count = 1) {
-  // 1) Limpa nulls pendentes
-  compactInventory();
-
-  let remaining = count;
-
-  // 2) Tenta preencher pilhas existentes
-  for (let item of player.inventory) {
-    if (item.type === type && item.count < 99) {
-      const space = 99 - item.count;
-      const toAdd = Math.min(space, remaining);
-      item.count += toAdd;
-      remaining -= toAdd;
-      if (remaining === 0) break;
-    }
-  }
-
-  // 3) Abre novos slots se ainda restar
-  while (remaining > 0 && player.inventory.length < player.invSize) {
-    const stack = Math.min(99, remaining);
-    player.inventory.push({ type, count: stack });
-    remaining -= stack;
-  }
-
-  // 4) Se ainda sobrar, inventário cheio
-  if (remaining > 0) {
-    alert('Inventário cheio! Não couberam ' + remaining + 'x ' + type);
-  }
-
-  updateHUD();
-}
-
-
-function removeItem(type, qty) {
-  compactInventory();
-
-  const it = getItem(type);
-  if (!it) return;
-  it.count -= qty;
-  if (it.count <= 0) {
-    // remove do array
-    player.inventory = player.inventory.filter(i => i !== it);
-  }
-
-  updateHUD();
-}
-
-setInterval(() => {
-  timeOfCycle += 1000;
-  if (isDay && timeOfCycle >= dayDuration) {
-    // virar pra noite
-    isDay = false;
-    timeOfCycle = 0;
-    spawnLions();
-  } else if (!isDay && timeOfCycle >= nightDuration) {
-    // virar pra dia
-    isDay = true;
-    timeOfCycle = 0;
-    despawnLions();
-  }
-}, 1000);
-
-function updateArmorHUD() {
-  const el = document.getElementById('armorHUD');
-  if (!player.armor) {
-    el.innerText = 'Armadura: Nenhuma';
-    return;
-  }
-  // Objeto da armadura equipada
-  const armorObj = WOOD_ARMOR; 
-  // Se você tiver várias armaduras, use um map ARMORS[player.armor]
-
-  el.innerText = 
-    `Armadura: ${armorObj.name} Dur: ${player.armorDur}/${player.armorDurMax}`;
-}
-
-
-
-
-
-function rand(){ return Math.random()*islandRadius*2 - islandRadius; }
-function randInt(min,max){ return Math.floor(Math.random()*(max-min+1) + min); }
-let nearbyChest = null;
-
-// --- Desenho ---
-function draw() {
-  updateToolHUD();
-  ctx.clearRect(0, 0, W, H);
-
-
-
-  // —————— Transformação de mundo ——————
-  ctx.save();
-      // 1) Aplica escala (zoom out = valor < 1, zoom in = > 1)
-  ctx.scale(zoomFactor, zoomFactor);
-
-    ctx.translate(W / 2 / zoomFactor - player.x, H / 2 / zoomFactor - player.y);
-
-
-  // 1) Atualiza comportamento dos leões (antes de desenhá‑los)
-  if (!isDay) {
-    lions.forEach(l => {
-      let dx = player.x - l.x, dy = player.y - l.y;
-      let dist = Math.hypot(dx, dy);
-      if (dist < 300) {
-        // Persegue
-        l.x += (dx / dist) * l.speed;
-        l.y += (dy / dist) * l.speed;
+      const rcount = rocks?.count || 0;
+      const wcount = wood?.count || 0;
+      if (rcount >= 5 && wcount >= 10) {
+        console.log('   → Recursos OK! Craftando machado…');
+        removeItem('rockSmall', 5);
+        removeItem('wood', 10);
+        player.tool = 'axe';
+        player.toolDur = 20;
+        updateHUD();
+        console.log('   → player.tool set to', player.tool, 'toolDur =', player.toolDur);
+        alert('Craftou machado de pedra!');
       } else {
-        // Patrulha aleatoriamente
-        let angle = Math.random() * 2 * Math.PI;
-        l.x += Math.cos(angle) * l.speed * 0.5;
-        l.y += Math.sin(angle) * l.speed * 0.5;
+        console.log('   → Recursos insuficientes no momento do clique');
+        alert('Recursos insuficientes.');
       }
     });
-  }
 
-  // 2) Desenha ilha
-  ctx.beginPath();
-  ctx.fillStyle = '#a0652c';
-  ctx.arc(0, 0, islandRadius, 0, 2 * Math.PI);
-  ctx.fill();
+    // disparar no clique normal (desktop)…
+    btnAttack.addEventListener('click', attack);
+    // …e também no toque (mobile)
+    btnAttack.addEventListener('touchstart', e => {
+      e.preventDefault();  // opcional, evita geração dupla de eventos
+      attack();
+    });
 
-  // 3) Desenha objetos do mundo
-  // 3) Desenha objetos do mundo
-objects.forEach(o => {
-  // ——— Manter sempre dentro da ilha ———
-  const distFromCenter = Math.hypot(o.x, o.y);
-  if (distFromCenter > islandRadius) {
-    // recalcula o ângulo e reposiciona na borda
-    const angle = Math.atan2(o.y, o.x);
-    o.x = Math.cos(angle) * islandRadius;
-    o.y = Math.sin(angle) * islandRadius;
-  }
-
-    // ——— Magic Parrot — inserir primeiro! ———
-  if (o.type === 'magicparrot') {
-    // comportamento selvagem: persegue/patrulha como os leões à noite
-      if (parrotState === 'wild') {
-        let angle = Math.random() * 2 * Math.PI;
-        o.x += Math.cos(angle) * parrotFollowSpeed * 0.5;
-        o.y += Math.sin(angle) * parrotFollowSpeed * 0.5;
+    document.getElementById('craftSword').onclick = () => {
+      let wood = getItem('wood')?.count || 0;
+      let rock = getItem('rockSmall')?.count || 0;
+      if (wood >= swordStats.cost.wood && rock >= swordStats.cost.rockSmall) {
+        removeItem('wood', swordStats.cost.wood);
+        removeItem('rockSmall', swordStats.cost.rockSmall);
+        player.tool = 'sword';
+        player.toolDur = 35;      // agora a espada tem durabilidade 35
+        alert('Você craftou a Espada de Pedra! Durabilidade: 35');
+        updateHUD();
+      } else {
+        alert('Recursos insuficientes para craftar a espada.');
       }
-    // comportamento doméstico: segue o jogador
-      if (parrotState === 'domestic' && parrotFollowEnabled) {
-    let dx   = player.x - o.x;
-    let dy   = player.y - o.y;
-    let dist = Math.hypot(dx, dy);
-    let spd  = dist > 300
-               ? parrotFollowSpeed * 2
-               : parrotFollowSpeed;
-    if (dist > 5) {
-      o.x += (dx / dist) * spd;
-      o.y += (dy / dist) * spd;
-    }
-  }
+    };
 
-    // desenha o papagaio
-    const img = imgs['magicparrot'];
-    if (img.complete) {
-      ctx.drawImage(img, o.x - 32, o.y - 32, 64, 64);
+
+
+    document.getElementById('craftPack').onclick = () => {
+      // 1) Se já tiver mochila, bloqueia tudo e não consome nada:
+      if (player.backpackLevel >= 0) {
+        alert('Você já possui uma mochila!');
+        return;
+      }
+
+      // 2) Só aqui embaixo verificamos recursos e consumimos:
+      const ropes = getItem('rope')?.count || 0;
+      const wood = getItem('wood')?.count || 0;
+
+      if (ropes >= 20 && wood >= 10) {
+        // consome recursos
+        removeItem('rope', 20);
+        removeItem('wood', 10);
+
+        // cria a mochila pela primeira vez
+        player.backpackLevel = 0;
+        player.invSize = 6;      // nível 0 = 6 slots
+        ensureInventorySize();         // ajusta o array inventory
+        updateHUD();                   // redesenha o HUD
+
+        alert(`Mochila criada! Você tem ${player.invSize} slots agora.`);
+      } else {
+        alert('Recursos insuficientes para criar a mochila.');
+      }
+    };
+
+
+
+    document.getElementById('craftFiber').onclick = () => {
+      let leaves = getItem('leaf');
+      if (leaves && leaves.count >= 6) {
+        removeItem('leaf', 6);
+        giveItem('fiber', 1);
+        updateHUD();
+        alert('Fibra criada!');
+      } else {
+        alert('Folhas insuficientes para criar fibra.');
+      }
+    };
+
+    document.getElementById('craftRope').onclick = () => {
+      let fibers = getItem('fiber');
+      if (fibers && fibers.count >= 3) {
+        removeItem('fiber', 3);
+        giveItem('rope', 1);
+        updateHUD();
+        alert('Corda criada!');
+      } else {
+        alert('Fibras insuficientes para criar corda.');
+      }
+    };
+
+    document.getElementById("btnMinigameRewards").addEventListener("click", () => {
+  alert(`🎮 Recompensas do Minigame:
+
+Fácil   → 3 cocos 🌴  
+Médio   → 1 Poção de Zoom 🔍  
+Difícil → 1 Poção de Buff 💪  
+Insano  → 1 Poção de Buff + 1 Baú Grátis 🗃️
+
+🏆 Ao zerar todos os modos você recebe:
+• 3 cocos
+• 1 Poção de Zoom
+• 1 Poção de Buff
+• 1 Baú
+
+Tudo 100% gratuito para te ajudar na sobrevivência! 💥`);
+});
+
+    function checkCollision(newX, newY) {
+      for (let o of objects) {
+        if (['tree', 'manualtree', 'rockBig'].includes(o.type)) {
+          let dist = Math.hypot(o.x - newX, o.y - newY);
+          let radius = o.type === 'tree' ? 50 : 40;
+          if (dist < radius + player.size) return true;
+        }
+      }
+      return false;
     }
-    // círculo branco de recompensa
-    if (parrotCircle) {
+
+    // --- Joystick ---
+    // Variáveis do joystick
+    let joystick = document.getElementById('joystick');
+    let stick = document.getElementById('stick');
+    let joystickRadius = joystick.offsetWidth / 2;
+    let maxStickDistance = joystickRadius - stick.offsetWidth / 2; // Distância máxima que o stick pode se mover
+
+    let joystickDirection = { dx: 0, dy: 0 }; // Direção do joystick
+    let joystickCenter = {
+      x: joystick.getBoundingClientRect().left + joystickRadius,
+      y: joystick.getBoundingClientRect().top + joystickRadius
+    };
+
+
+
+    function getJoystickCenter() {
+      const rect = joystick.getBoundingClientRect();
+      return {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
+      };
+    }
+
+    function centerStick() {
+      const joystickRadius = joystick.offsetWidth / 2;
+      stick.style.transform = `translate(${joystickRadius - stick.offsetWidth / 2}px, ${joystickRadius - stick.offsetHeight / 2}px)`;
+    }
+    centerStick();
+
+    // Função para atualizar a posição do stick
+    function updateStickPosition(x, y) {
+      // limita ao raio
+      let dist = Math.hypot(x, y);
+      if (dist > maxStickDistance) {
+        const a = Math.atan2(y, x);
+        x = Math.cos(a) * maxStickDistance;
+        y = Math.sin(a) * maxStickDistance;
+      }
+
+      // parte fixa (-13px,-13px) + deslocamento
+      stick.style.transform =
+        `translate(calc(-13px + ${x}px), calc(-13px + ${y}px))`;
+
+      joystickDirection = { dx: x / maxStickDistance, dy: y / maxStickDistance };
+    }
+
+    function upgradeBackpack() {
+      // Verifica se o jogador já possui mochila
+      if (player.backpackLevel === undefined || player.backpackLevel < 0) {
+        alert('Você precisa primeiro criar uma mochila!');
+        return;
+      }
+
+      // Se o jogador já tiver uma mochila no nível máximo, não permite upgrade
+      const nextLevel = player.backpackLevel + 1;
+      if (nextLevel > maxBackpackLevel) {
+        alert('Sua mochila já está no nível máximo (10 slots)!');
+        return;
+      }
+
+      // Obtém o custo do upgrade
+      const cost = backpackCosts[nextLevel];
+      const haveWood = getItem('wood')?.count || 0;
+      const haveRope = getItem('rope')?.count || 0;
+
+      // Verifica se o jogador tem recursos suficientes para o upgrade
+      if (haveWood < (cost.wood || 0) || haveRope < (cost.rope || 0)) {
+        alert('Recursos insuficientes para upgrade da mochila.');
+        return;
+      }
+
+      // Remove os recursos necessários para o upgrade
+      if (cost.wood) removeItem('wood', cost.wood);
+      if (cost.rope) removeItem('rope', cost.rope);
+
+      // Define a quantidade de slots conforme o próximo nível
+      let newSize;
+      if (nextLevel === 0) {
+        newSize = 6;  // Nível 0 dá 6 slots (ajuste se precisar ser 2 slots)
+      } else {
+        newSize = 6 + nextLevel;  // Cada nível superior dá 1 slot a mais
+      }
+
+      // Atualiza o nível da mochila e o tamanho do inventário
+      player.invSize = newSize;
+      player.backpackLevel = nextLevel;
+      ensureInventorySize();  // Ajusta o tamanho do inventário
+      updateHUD();  // Atualiza a interface (HUD)
+
+      alert(`Mochila upgradeada para nível ${nextLevel}: ${newSize} slots.`);
+    }
+
+
+    // Linca o botão ao handler
+    document.getElementById('btnUpgradePack').onclick = upgradeBackpack;
+
+    // Função para iniciar o toque ou mouse
+    function startJoystick(event) {
+      event.preventDefault();
+
+      // 1. Pega a primeira touch (ou o evento de mouse) e armazena o identifier
+      const firstTouch = event.touches ? event.touches[0] : event;
+      joystickTouchId = firstTouch.identifier;
+
+      // 2. Recalcula o centro do joystick
+      const rect = joystick.getBoundingClientRect();
+      joystickCenter = {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
+      };
+
+      // 3. Move o stick até onde tocou
+      const dx = firstTouch.clientX - joystickCenter.x;
+      const dy = firstTouch.clientY - joystickCenter.y;
+      updateStickPosition(dx, dy);
+
+      // 4. Só aqui adiciona os listeners de movimento e fim de toque
+      window.addEventListener('touchmove', moveJoystick);
+      window.addEventListener('mousemove', moveJoystick);
+      window.addEventListener('touchend', endJoystick);
+      window.addEventListener('mouseup', endJoystick);
+    }
+
+
+
+
+    // Função para mover o stick
+    function moveJoystick(event) {
+      // só reage à mesma touch
+      const touch = event.touches
+        ? Array.from(event.touches).find(t => t.identifier === joystickTouchId)
+        : event;
+      if (!touch) return;
+      const dx = touch.clientX - joystickCenter.x;
+      const dy = touch.clientY - joystickCenter.y;
+      updateStickPosition(dx, dy);
+    }
+
+    // Função para finalizar o toque ou mouse
+    function endJoystick(event) {
+      // só solta se for a mesma touch que começou
+      if (event.changedTouches) {
+        const ended = Array.from(event.changedTouches)
+          .some(t => t.identifier === joystickTouchId);
+        if (!ended) return;
+      }
+
+      // reset
+      stick.style.transform = 'translate(-13px, -13px)';
+      joystickDirection = { dx: 0, dy: 0 };
+      const rect = joystick.getBoundingClientRect();
+      joystickCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      joystickTouchId = null;
+
+      window.removeEventListener('touchmove', moveJoystick);
+      window.removeEventListener('mousemove', moveJoystick);
+      window.removeEventListener('touchend', endJoystick);
+      window.removeEventListener('mouseup', endJoystick);
+    }
+
+
+    // Adiciona eventos para toque e clique do mouse
+    joystick.addEventListener('touchstart', startJoystick);
+    joystick.addEventListener('mousedown', startJoystick);
+    // --- Função de Ataque ---
+    function attack() {
+      console.log('===== INVOCANDO ATTACK() =====');
+      console.log('  Ferramenta:', player.tool, 'Durabilidade:', player.toolDur);
+
+
+      let dmg = 15;
+      let toolBonus = 0;
+
+      // … e usa effectiveReach no lugar de reach …
+
+
+      // Ajusta dano e alcance conforme ferramenta
+      if (player.tool === 'axe') {
+        dmg = 35;
+        toolBonus = 40;   // machado dá +40px de alcance
+      } else if (player.tool === 'sword') {
+        dmg = 80;
+        toolBonus = 80;   // espada dá +80px de alcance
+      }
+      else if (player.tool === 'sickle') {
+        // mesma lógica do machado, mas dura mais
+        dmg = SICKLE.damage;       // 35
+        toolBonus = SICKLE.reachBonus;   // 40
+      }
+
+      const effectiveReach = (baseReach + toolBonus) * reachMultiplier;
+      animCircle(effectiveReach);
+
+      // 1) Ataca objetos do mundo
+      for (let i = objects.length - 1; i >= 0; i--) {
+        const o = objects[i];
+        // <<< PULA USINA, BAÚ E PAPAGAIO >>>
+        if (o.type === 'magicparrot' || o.type === 'machine' || o.type === 'chest') {
+          continue;
+        }
+        const dist = Math.hypot(o.x - player.x, o.y - player.y);
+        if (dist > effectiveReach) continue;
+        console.log(`  → Objeto ao alcance: ${o.type} (hp=${o.hp}), dist=${dist.toFixed(1)}`);
+        // ← Exige machado apenas para árvores e pedras grandes (hp > 1)
+        if ((o.type === 'tree' || o.type === 'rockBig') && player.tool !== 'axe') {
+          console.log('    • Ignorado: precisa de machado');
+          continue;
+        }
+
+        if (o.type === 'bush' && player.tool === 'sickle') {
+          const base = Math.floor(Math.random() * (8 - 4 + 1)) + 4;
+          const mult = potionActive ? 6 : 3;
+          giveItem('leaf', base * mult);
+          // "mata" o arbusto e deixa ele seguir pro bloco de remoção
+          o.hp = 0;
+          // sem o continue, cai no próximo if(o.hp<=0)
+        }
+
+        // Aplica dano
+        console.log(`    • Aplicando dano ${dmg}`);
+        const hpAntes = o.hp;
+        o.hp -= dmg;
+        console.log(`    • HP antes=${hpAntes}, depois=${o.hp}`);
+
+
+        // Reduz durabilidade se for ferramenta
+        if (player.tool === 'axe' || player.tool === 'sword' || player.tool === 'sickle') {
+          const durAntes = player.toolDur;
+          player.toolDur--;
+          console.log(`    • Durabilidade antes=${durAntes}, depois=${player.toolDur}`);
+          if (player.toolDur <= 0) {
+            const name = player.tool === 'axe' ? 'machado'
+              : player.tool === 'sword' ? 'espada'
+                : 'foice';
+            alert(`Sua ${name} quebrou!`);
+            player.tool = null;
+            player.toolDur = 0;
+          }
+        }
+
+        // Se o objeto morreu, faz drop e respawn
+        if (o.hp <= 0) {
+          const tipo = o.type;
+          const hpMax = o.hpMax || (tipo === 'bush' ? 1 : 5);
+
+          switch (tipo) {
+            case 'tree':
+              giveItem('coconut', randInt(2, 6) * dropMultipliers.coconut);
+              giveItem('wood', randInt(8, 14) * dropMultipliers.wood);
+              giveItem('leaf', randInt(12, 18) * dropMultipliers.leaf);
+              if (Math.random() < 0.20) giveItem('seeds', 1 * dropMultipliers.seeds);
+              break;
+
+            case 'manualtree':
+              giveItem('coconut', randInt(2, 6) * dropMultipliers.coconut);
+              giveItem('wood', randInt(8, 14) * dropMultipliers.wood);
+              giveItem('leaf', randInt(12, 18) * dropMultipliers.leaf);
+              // 20% de chance de soltar 1 semente, igual à árvore normal
+              if (Math.random() < 0.20) {
+                giveItem('seeds', 1 * dropMultipliers.seeds);
+              }
+              break;
+
+            case 'bush':
+              if (!o.harvested) {
+                o.harvested = true;
+                // frutas 8–12 × dropMultipliers.fruit (1× sem poção, 2× com poção)
+                giveItem('fruit', randInt(8, 12) * dropMultipliers.fruit);
+                giveItem('leaf', randInt(4, 8) * dropMultipliers.leaf);
+              }
+              break;
+
+            case 'rockBig':
+              giveItem('rockSmall', 10 * dropMultipliers.rockSmall);
+              break;
+
+            case 'rockSmall':
+              giveItem('rockSmall', 1 * dropMultipliers.rockSmall);
+              break;
+
+            case 'stick':
+              giveItem('wood', 1 * dropMultipliers.wood);
+              break;
+          }
+
+          objects.splice(i, 1);
+          // respawn após atraso
+          let delay = (tipo === 'tree' || tipo === 'rockBig') ? 5 * 60 * 1000
+            : (tipo === 'bush') ? 8 * 60 * 1000
+              : 12 * 60 * 1000;
+
+          if (!o.noRespawn) {
+            setTimeout(() => spawnOnLand(tipo, hpMax), delay);
+          }
+        }
+      }
+
+      // 2) Ataca leões (se existir array lions)
+      if (typeof lions !== 'undefined') {
+        for (let i = lions.length - 1; i >= 0; i--) {
+          const l = lions[i];
+          const dist = Math.hypot(l.x - player.x, l.y - player.y);
+          if (dist > effectiveReach) continue;
+
+          l.hp -= dmg;
+          console.log(`🦁 Leão atingido! Dano: ${dmg}, HP restante: ${l.hp.toFixed(1)}`);
+
+          // Reduz durabilidade ao atacar leão
+          if (player.tool === 'axe' || player.tool === 'sword' || player.tool === 'sickle') {
+            player.toolDur--;
+            console.log(`    • Durabilidade antes e depois: ${player.toolDur + 1} → ${player.toolDur}`);
+            if (player.toolDur <= 0) {
+              const name = player.tool === 'axe' ? 'machado'
+                : player.tool === 'sword' ? 'espada'
+                  : 'foice';
+              alert(`Sua ${name} quebrou!`);
+              player.tool = null;
+              player.toolDur = 0;
+            }
+          }
+
+
+          if (l.hp <= 0) {
+
+            if (Math.random() < 0.4) {
+              giveItem('zoomPotion', 1);
+              alert('🍃 Você encontrou uma Poção de Zoom!');
+            }
+
+            lions.splice(i, 1);
+            console.log('💀 Leão morreu!');
+          }
+        }
+      }
+
+      updateHUD();
+    }
+
+    function showBattleRewards() {
+      // lê todas as recompensas do sessionStorage
+      const cocos = Number(sessionStorage.getItem("rewardCocos") || 0);
+      const zoom = Number(sessionStorage.getItem("rewardZoomPotion") || 0);
+      const buff = Number(sessionStorage.getItem("rewardBuffPotion") || 0);
+      const chest = Number(sessionStorage.getItem("rewardChest") || 0);
+
+      // se não houver nenhuma recompensa, não exibe nada
+      if (!cocos && !zoom && !buff && !chest) return;
+
+      // cria ou pega o botão
+      let btn = document.getElementById("btnBattleReward");
+      if (!btn) {
+        btn = document.createElement("button");
+        btn.id = "btnBattleReward";
+
+        // reaplica exatamente o seu estilo original
+        btn.style.cssText = `
+      position: absolute;
+      bottom: 20px;
+      right: 80px;
+      padding: 10px 14px;
+      font-size: 16px;
+      background: #ff0;
+      color: #000;
+      border: 2px solid #333;
+      border-radius: 6px;
+      z-index: 1000;
+      cursor: pointer;
+    `;
+
+        btn.addEventListener("click", claimBattleRewards);
+        document.body.appendChild(btn);
+      }
+
+      // monta o texto de acordo com o que existe
+      const parts = [];
+      if (cocos) parts.push(`${cocos} coco(s)`);
+      if (zoom) parts.push(`1 Poção de Zoom`);
+      if (buff) parts.push(`1 Poção de Buff`);
+      if (chest) parts.push(`1 Baú Grátis`);
+
+      btn.innerText = `Resgatar: ${parts.join(", ")}`;
+      btn.style.display = "block";
+    }
+
+
+    function claimBattleRewards() {
+      // lê as recompensas do sessionStorage
+      const cocos = Number(sessionStorage.getItem("rewardCocos") || 0);
+      const zoom = Number(sessionStorage.getItem("rewardZoomPotion") || 0);
+      const buff = Number(sessionStorage.getItem("rewardBuffPotion") || 0);
+      const chest = Number(sessionStorage.getItem("rewardChest") || 0);
+
+      // dá os cocos e poções no inventário
+      if (cocos) giveItem('coconut', cocos);
+      if (zoom) giveItem('zoomPotion', 1);
+      if (buff) giveItem('potion', 1);
+
+      // se ganhou o baú, constrói um baú ao redor do player
+      if (chest) {
+        // spawnChest recebe coordenadas x,y do player
+        spawnChest(player.x, player.y);  // função já definida em index.html :contentReference[oaicite:0]{index=0}
+      }
+
+      // notifica o jogador
+      alert(`🎉 Você recebeu ${cocos} coco(s), ${zoom} Poção de Zoom, ${buff} Poção de Buff e ${chest} Baú Grátis!`);
+
+      // limpa as chaves para não duplicar
+      sessionStorage.removeItem("rewardCocos");
+      sessionStorage.removeItem("rewardZoomPotion");
+      sessionStorage.removeItem("rewardBuffPotion");
+      sessionStorage.removeItem("rewardChest");
+
+      // esconde o botão e atualiza o HUD
+      const btn = document.getElementById("btnBattleReward");
+      btn.style.display = "none";
+      updateHUD();
+    }
+
+
+
+
+
+    function spawnLions() {
+      let n = Math.floor(Math.random() * 5) + 2;
+      for (let i = 0; i < n; i++) {
+        let x, y, attempts = 0;
+        do {
+          x = Math.random() * islandRadius * 2 - islandRadius;
+          y = Math.random() * islandRadius * 2 - islandRadius;
+          attempts++;
+          // Se em 10 tentativas não achar, joga no centro
+          if (attempts > 10) { x = 0; y = 0; break; }
+        } while (Math.hypot(x, y) > islandRadius);
+
+        lions.push({
+          x,
+          y,
+          hp: 650,
+          speed: 1.3 * 2
+        });
+      }
+    }
+
+
+    function despawnLions() {
+      lions.length = 0;
+    }
+
+
+    // Intervalo para dano de leão: 20 de HP por segundo, com redução de armadura
+    const lionDamageInterval = setInterval(() => {
+      lions.forEach(l => {
+        const dist = Math.hypot(l.x - player.x, l.y - player.y);
+        const touchDistance = player.size + 32;
+        if (dist <= touchDistance) {
+          // dano bruto
+          const raw = 20;
+          // aplica redução (0.40 = 40% se armadura equipada)
+          const actual = Math.round(raw * (1 - (player.damageReduction || 0)));
+          player.health = Math.max(0, player.health - actual);
+
+          if (player.armor && player.armorDur > 0) {
+            player.armorDur--;
+            if (player.armorDur <= 0) {
+              player.armor = null;
+              player.armorDur = 0;
+              player.armorDurMax = 0;
+              player.damageReduction -= 0.60;
+              player.moveSpeed /= 1.20;
+              alert('Sua Armadura quebrou!');
+            }
+            updateArmorHUD();
+          }
+
+
+          lastDamageTime = Date.now();
+          updateBars();
+
+          if (player.health === 0) {
+            clearInterval(regenInterval);
+            clearInterval(lionDamageInterval);
+            // opcional: clearInterval(damageInterval);
+            endGame();
+          }
+        }
+      });
+    }, 1000);
+
+
+
+    const damageInterval = setInterval(() => {
+      if (player.hunger === 0 || player.thirst === 0) {
+        player.health = Math.max(0, player.health - 10);
+        lastDamageTime = Date.now();     // marca o momento do dano
+        updateBars();
+        if (player.health === 0) {
+          clearInterval(damageInterval);
+          clearInterval(regenInterval);
+          endGame();
+        }
+      }
+    }, 1000);
+    // --- Animação do círculo de ataque ---
+    let circleAnim = null;
+    function animCircle(r) {
+      circleAnim = { r, alpha: 1 };
+      setTimeout(() => circleAnim = null, 300);
+    }
+
+    function getDefaultHP(type) {
+      switch (type) {
+        case 'tree': return 100;
+        case 'rockBig': return 100;
+        case 'bush': return 1;
+        default: return 1;
+      }
+    }
+
+    let potionActive = false;
+    let potionCooldown = false;
+    let potionCooldownTime = 0;      // em segundos
+    let potionCooldownInterval = null;
+
+    function updatePotionCooldownDisplay() {
+      const m = String(Math.floor(potionCooldownTime / 60)).padStart(2, '0');
+      const s = String(potionCooldownTime % 60).padStart(2, '0');
+      document.getElementById('potionCooldown').innerText = `Cooldown: ${m}:${s}`;
+    }
+
+
+
+
+    function applyPotionBuff() {
+      if (potionActive || potionCooldown) {
+        alert('Ainda em cooldown!');
+        return;
+      }
+      potionActive = true;
+      // Salva estados
+      reachMultiplier = 2;
+      const savedDrops = { ...dropMultipliers };
+
+      // 1) Exibe barra e reseta largura
+      const barContainer = document.getElementById('potionBarContainer');
+      const barFill = document.getElementById('potionBarFill');
+      barContainer.style.display = 'block';
+      barFill.style.transition = 'width 0s';
+      barFill.style.width = '100%';
+
+      // força reflow para pegar o 100% inicial antes de animar
+      void barFill.offsetWidth;
+
+      // 2) Anima para 0% em 160 000 ms (2 min 40 s)
+      barFill.style.transition = 'width 160s linear';  // 160s = 2m40s
+      barFill.style.width = '0%';
+
+      barFill.addEventListener('transitionend', function onEnd(e) {
+        if (e.propertyName === 'width') {
+          barContainer.style.display = 'none';
+          barFill.removeEventListener('transitionend', onEnd);
+        }
+      });
+
+      // Efeito imediato
+      player.health = Math.min(100, player.health + 40);
+      updateBars();
+      player.moveSpeed *= 1.4;
+      Object.keys(dropMultipliers).forEach(k => dropMultipliers[k] = 2);
+
+      clearInterval(hungerInterval);
+      clearInterval(thirstInterval);
+
+      // dentro de applyPotionBuff():
+
+      // Duração: 160_000ms
+      setTimeout(() => {
+        // Reverte
+        player.moveSpeed /= 1.4;
+        reachMultiplier = 1;
+        Object.assign(dropMultipliers, savedDrops);
+
+        // Reinicia decaimento
+        hungerInterval = setInterval(decayHunger, hungerDecay);
+        thirstInterval = setInterval(decayThirst, thirstDecay);
+
+        potionActive = false;
+        potionCooldown = true;
+        startPotionCooldown();       // inicia e mostra o contador
+
+        barContainer.style.display = 'none';
+        // Cooldown 5min
+        setTimeout(() => potionCooldown = false, 5 * 60 * 1000);
+      }, 160000);
+    }
+
+
+
+    /** Inicia o cooldown de 5 min e mostra o contador */
+    function startPotionCooldown() {
+      potionCooldownTime = 5 * 60;    // 5 minutos
+      const cdEl = document.getElementById('potionCooldown');
+      cdEl.style.display = 'block';
+      updatePotionCooldownDisplay();
+
+      // limpa qualquer intervalo anterior
+      clearInterval(potionCooldownInterval);
+      potionCooldownInterval = setInterval(() => {
+        potionCooldownTime--;
+        if (potionCooldownTime <= 0) {
+          clearInterval(potionCooldownInterval);
+          potionCooldown = false;
+          cdEl.style.display = 'none';
+        } else {
+          updatePotionCooldownDisplay();
+        }
+      }, 1000);
+    }
+
+    function consumeZoomPotion() {
+      if (potionCooldown) { alert('Ainda em cooldown!'); return; }
+
+      // 4× de zoom out:
+      zoomFactor = 0.25;
+
+      // dura, por exemplo, 60 s:
+      setTimeout(() => {
+        zoomFactor = 1;  // volta ao normal
+      }, 60 * 1000);
+
+      // aqui você também aciona o cooldown, decrementa o item do inventário etc.
+    }
+
+
+
+    function getItem(type) {
+      return player.inventory.find(i => i && i.type === type) || null;
+    }
+
+    function giveItem(type, count = 1) {
+      // 1) Limpa nulls pendentes
+      compactInventory();
+
+      let remaining = count;
+
+      // 2) Tenta preencher pilhas existentes
+      for (let item of player.inventory) {
+        if (item.type === type && item.count < 99) {
+          const space = 99 - item.count;
+          const toAdd = Math.min(space, remaining);
+          item.count += toAdd;
+          remaining -= toAdd;
+          if (remaining === 0) break;
+        }
+      }
+
+      // 3) Abre novos slots se ainda restar
+      while (remaining > 0 && player.inventory.length < player.invSize) {
+        const stack = Math.min(99, remaining);
+        player.inventory.push({ type, count: stack });
+        remaining -= stack;
+      }
+
+      // 4) Se ainda sobrar, inventário cheio
+      if (remaining > 0) {
+        alert('Inventário cheio! Não couberam ' + remaining + 'x ' + type);
+      }
+
+      updateHUD();
+    }
+
+
+    function removeItem(type, qty) {
+      compactInventory();
+
+      const it = getItem(type);
+      if (!it) return;
+      it.count -= qty;
+      if (it.count <= 0) {
+        // remove do array
+        player.inventory = player.inventory.filter(i => i !== it);
+      }
+
+      updateHUD();
+    }
+
+    setInterval(() => {
+      timeOfCycle += 1000;
+      if (isDay && timeOfCycle >= dayDuration) {
+        // virar pra noite
+        isDay = false;
+        timeOfCycle = 0;
+        spawnLions();
+      } else if (!isDay && timeOfCycle >= nightDuration) {
+        // virar pra dia
+        isDay = true;
+        timeOfCycle = 0;
+        despawnLions();
+      }
+    }, 1000);
+
+    function updateArmorHUD() {
+      const el = document.getElementById('armorHUD');
+      if (!player.armor) {
+        el.innerText = 'Armadura: Nenhuma';
+        return;
+      }
+      // Objeto da armadura equipada
+      const armorObj = WOOD_ARMOR;
+      // Se você tiver várias armaduras, use um map ARMORS[player.armor]
+
+      el.innerText =
+        `Armadura: ${armorObj.name} Dur: ${player.armorDur}/${player.armorDurMax}`;
+    }
+
+
+
+
+
+    function rand() { return Math.random() * islandRadius * 2 - islandRadius; }
+    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1) + min); }
+    let nearbyChest = null;
+
+    // --- Desenho ---
+    function draw() {
+      updateToolHUD();
+      ctx.clearRect(0, 0, W, H);
+
+
+
+      // —————— Transformação de mundo ——————
+      ctx.save();
+      // 1) Aplica escala (zoom out = valor < 1, zoom in = > 1)
+      ctx.scale(zoomFactor, zoomFactor);
+
+      ctx.translate(W / 2 / zoomFactor - player.x, H / 2 / zoomFactor - player.y);
+
+
+      // 1) Atualiza comportamento dos leões (antes de desenhá‑los)
+      if (!isDay) {
+        lions.forEach(l => {
+          let dx = player.x - l.x, dy = player.y - l.y;
+          let dist = Math.hypot(dx, dy);
+          if (dist < 300) {
+            // Persegue
+            l.x += (dx / dist) * l.speed;
+            l.y += (dy / dist) * l.speed;
+          } else {
+            // Patrulha aleatoriamente
+            let angle = Math.random() * 2 * Math.PI;
+            l.x += Math.cos(angle) * l.speed * 0.5;
+            l.y += Math.sin(angle) * l.speed * 0.5;
+          }
+        });
+      }
+
+      // 2) Desenha ilha
       ctx.beginPath();
-      ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-      ctx.lineWidth   = 4;
-      ctx.arc(o.x, o.y, 100, 0, 2 * Math.PI);
-      ctx.stroke();
-    }
-    return; // não processa mais esse objeto
-  }
+      ctx.fillStyle = '#a0652c';
+      ctx.arc(0, 0, islandRadius, 0, 2 * Math.PI);
+      ctx.fill();
 
-  // dentro de objects.forEach(o => { … })
-  if (o.type === 'raft') {
-  const img = imgs['raft'];
-  if (img.complete) {
-    // 250×250px, centralizado em o.x, o.y
-    ctx.drawImage(img, o.x - 125, o.y - 125, 250, 250);
-  }
-  return;
-}
+      // 3) Desenha objetos do mundo
+      // 3) Desenha objetos do mundo
+      objects.forEach(o => {
+        // ——— Manter sempre dentro da ilha ———
+        const distFromCenter = Math.hypot(o.x, o.y);
+        if (distFromCenter > islandRadius) {
+          // recalcula o ângulo e reposiciona na borda
+          const angle = Math.atan2(o.y, o.x);
+          o.x = Math.cos(angle) * islandRadius;
+          o.y = Math.sin(angle) * islandRadius;
+        }
 
-if (o.type === 'machine') {
-    const P = o;
+        // ——— Magic Parrot — inserir primeiro! ———
+        if (o.type === 'magicparrot') {
+          // comportamento selvagem: persegue/patrulha como os leões à noite
+          if (parrotState === 'wild') {
+            let angle = Math.random() * 2 * Math.PI;
+            o.x += Math.cos(angle) * parrotFollowSpeed * 0.5;
+            o.y += Math.sin(angle) * parrotFollowSpeed * 0.5;
+          }
+          // comportamento doméstico: segue o jogador
+          if (parrotState === 'domestic' && parrotFollowEnabled) {
+            let dx = player.x - o.x;
+            let dy = player.y - o.y;
+            let dist = Math.hypot(dx, dy);
+            let spd = dist > 300
+              ? parrotFollowSpeed * 2
+              : parrotFollowSpeed;
+            if (dist > 5) {
+              o.x += (dx / dist) * spd;
+              o.y += (dy / dist) * spd;
+            }
+          }
 
-    // a) Desenha o círculo vermelho semi-transparente
-    if (P.timers.fuelRemaining > 0) {
+          // desenha o papagaio
+          const img = imgs['magicparrot'];
+          if (img.complete) {
+            ctx.drawImage(img, o.x - 32, o.y - 32, 64, 64);
+          }
+          // círculo branco de recompensa
+          if (parrotCircle) {
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+            ctx.lineWidth = 4;
+            ctx.arc(o.x, o.y, 100, 0, 2 * Math.PI);
+            ctx.stroke();
+          }
+          return; // não processa mais esse objeto
+        }
+
+        // dentro de objects.forEach(o => { … })
+        if (o.type === 'raft') {
+          const img = imgs['raft'];
+          if (img.complete) {
+            // 250×250px, centralizado em o.x, o.y
+            ctx.drawImage(img, o.x - 125, o.y - 125, 250, 250);
+          }
+          return;
+        }
+
+        if (o.type === 'machine') {
+          const P = o;
+
+          // a) Desenha o círculo vermelho semi-transparente
+          if (P.timers.fuelRemaining > 0) {
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(0,0,255,0.4)';  // azul 40% opacidade
+            ctx.lineWidth = 4;
+            ctx.arc(P.x, P.y, 100, 0, 2 * Math.PI);  // raio 100px (ajuste se quiser)
+            ctx.stroke();
+          }
+
+          // b) Desenha a imagem da usina
+          const img = imgs['plant'];
+          if (img.complete) {
+            ctx.drawImage(img, P.x - 50, P.y - 50, 100, 100);
+          }
+
+          return;
+        }
+
+        // agora desenha normalmente:
+        let img = imgs[o.type];
+        let sz = { tree: 100, manualtree: 100, rockBig: 80, bush: 60, chest: 64 }[o.type] || 30;
+        if (img.complete) {
+          ctx.drawImage(img, o.x - sz / 2, o.y - sz / 2, sz, sz);
+        }
+      });
+
+      // Antes de desenhar leões:
+      lions.forEach(l => {
+        const dist = Math.hypot(l.x, l.y);
+        if (dist > islandRadius) {
+          // projeta na borda mantendo o ângulo
+          const angle = Math.atan2(l.y, l.x);
+          l.x = Math.cos(angle) * islandRadius;
+          l.y = Math.sin(angle) * islandRadius;
+        }
+      });
+
+
+
+      // 4) Desenha leões
+      if (!isDay) {
+        lions.forEach(l => {
+          if (l.hp > 0 && imgs['lion'].complete) {
+            ctx.drawImage(imgs['lion'], l.x - 32, l.y - 32, 64, 64);
+          }
+        });
+      }
+
+      // 5) Desenha jogador
       ctx.beginPath();
-      ctx.strokeStyle = 'rgba(0,0,255,0.4)';  // azul 40% opacidade
-      ctx.lineWidth = 4;
-      ctx.arc(P.x, P.y, 100, 0, 2 * Math.PI);  // raio 100px (ajuste se quiser)
-      ctx.stroke();
-    }
+      ctx.fillStyle = 'blue';
+      ctx.arc(player.x, player.y, player.size, 0, 2 * Math.PI);
+      ctx.fill();
 
-    // b) Desenha a imagem da usina
-    const img = imgs['plant'];
-    if (img.complete) {
-      ctx.drawImage(img, P.x - 50, P.y - 50, 100, 100);
-    }
-
-    return;
-  }
-
-  // agora desenha normalmente:
-  let img = imgs[o.type];
-  let sz  = { tree:100, manualtree:100, rockBig:80, bush:60, chest:64 }[o.type] || 30;
-  if (img.complete) {
-    ctx.drawImage(img, o.x - sz/2, o.y - sz/2, sz, sz);
-  }
-});
-
-// Antes de desenhar leões:
-lions.forEach(l => {
-  const dist = Math.hypot(l.x, l.y);
-  if (dist > islandRadius) {
-    // projeta na borda mantendo o ângulo
-    const angle = Math.atan2(l.y, l.x);
-    l.x = Math.cos(angle) * islandRadius;
-    l.y = Math.sin(angle) * islandRadius;
-  }
-});
-
-
-
-  // 4) Desenha leões
-  if (!isDay) {
-    lions.forEach(l => {
-      if (l.hp > 0 && imgs['lion'].complete) {
-        ctx.drawImage(imgs['lion'], l.x - 32, l.y - 32, 64, 64);
+      // 6) Desenha círculo de ataque (se animando)
+      if (circleAnim) {
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(255,0,0,${circleAnim.alpha})`;
+        ctx.arc(player.x, player.y, circleAnim.r, 0, 2 * Math.PI);
+        ctx.stroke();
+        circleAnim.alpha -= 0.05;
       }
-    });
-  }
 
-  // 5) Desenha jogador
-  ctx.beginPath();
-  ctx.fillStyle = 'blue';
-  ctx.arc(player.x, player.y, player.size, 0, 2 * Math.PI);
-  ctx.fill();
-
-  // 6) Desenha círculo de ataque (se animando)
-  if (circleAnim) {
-    ctx.beginPath();
-    ctx.strokeStyle = `rgba(255,0,0,${circleAnim.alpha})`;
-    ctx.arc(player.x, player.y, circleAnim.r, 0, 2 * Math.PI);
-    ctx.stroke();
-    circleAnim.alpha -= 0.05;
-  }
-
-  let nearestPlant = null, pd = Infinity;
-  for (let o of objects) {
-    if (o.type === 'machine') {
-      const d = Math.hypot(o.x - player.x, o.y - player.y);
-      if (d < pd) { pd = d; nearestPlant = o; }
-    }
-  }
-  nearbyPlant = (pd <= 100 ? nearestPlant : null);
-  document.getElementById('btnOpenPlant').style.display = nearbyPlant ? 'block' : 'none';
-
-if (nearbyPlant || objects.some(p => p.type === 'machine' && p.upgraded)) {
-// Filtra todas as usinas que estão próximas ou foram aprimoradas
-const plantsToProcess = objects.filter(p =>
-  p.type === 'machine' && (p === nearbyPlant || p.upgraded)
-);
-
-// Processa cada usina na lista plantsToProcess
-plantsToProcess.forEach(P => {
-  // 1) Decrementa combustível (em frames)
-  if (P.timers.fuelRemaining > 0) {
-    // Decrementa enquanto há “combustível queimando”
-    P.timers.fuelRemaining--;
-  } else if (P.slots.fuel) {
-    // Recarrega novo pedaço de combustível
-    const f = P.slots.fuel;
-    let durSec = 0;
-
-    if (f.type === 'leaf') {
-      durSec = 5;
-    } else if (f.type === 'wood') {
-      durSec = 60;
-    } else {
-      alert(`❌ "${f.type}" não é um combustível válido! Use apenas folhas ou madeira.`);
-      // Remove o item inválido e evita o travamento
-      P.slots.fuel = null;
-      return;  // Sai da função para evitar mais processamento
-    }
-
-    P.timers.fuelRemaining = durSec * FPS;  // em frames
-    f.count--;
-    if (f.count === 0) P.slots.fuel = null;
-  }
-
-  // 2) Crafting (30 s → craftTicks)
-  if (P.timers.fuelRemaining > 0 && P.slots.craftIn) {
-    P.timers.craftTimer++;
-    if (P.timers.craftTimer >= craftTicks) {
-      const inItem = P.slots.craftIn;
-      if (inItem.type === 'leaf' && inItem.count >= 3) {
-        inItem.count -= 3;
-        giveToMachineOutput(P, 'rope', 1);
-      } else if (inItem.type === 'fiber' && inItem.count >= 1) {
-        inItem.count -= 1;
-        giveToMachineOutput(P, 'rope', 2);
+      let nearestPlant = null, pd = Infinity;
+      for (let o of objects) {
+        if (o.type === 'machine') {
+          const d = Math.hypot(o.x - player.x, o.y - player.y);
+          if (d < pd) { pd = d; nearestPlant = o; }
+        }
       }
-      if (inItem.count === 0) P.slots.craftIn = null;
-      // Reseta o timer para o próximo ciclo de 30 s
-      P.timers.craftTimer = 0;
-    }
-  }
-});
+      nearbyPlant = (pd <= 100 ? nearestPlant : null);
+      document.getElementById('btnOpenPlant').style.display = nearbyPlant ? 'block' : 'none';
 
-}
+      if (nearbyPlant || objects.some(p => p.type === 'machine' && p.upgraded)) {
+        // Filtra todas as usinas que estão próximas ou foram aprimoradas
+        const plantsToProcess = objects.filter(p =>
+          p.type === 'machine' && (p === nearbyPlant || p.upgraded)
+        );
 
+        // Processa cada usina na lista plantsToProcess
+        plantsToProcess.forEach(P => {
+          // 1) Decrementa combustível (em frames)
+          if (P.timers.fuelRemaining > 0) {
+            // Decrementa enquanto há “combustível queimando”
+            P.timers.fuelRemaining--;
+          } else if (P.slots.fuel) {
+            // Recarrega novo pedaço de combustível
+            const f = P.slots.fuel;
+            let durSec = 0;
 
-  // 7) Detecção do baú próximo
-  let nearestChest = null, nearestDist = Infinity;
-  for (let o of objects) {
-    if (o.type === 'chest') {
-      let d = Math.hypot(player.x - o.x, player.y - o.y);
-      if (d < nearestDist) {
-        nearestDist  = d;
-        nearestChest = o;
+            if (f.type === 'leaf') {
+              durSec = 5;
+            } else if (f.type === 'wood') {
+              durSec = 60;
+            } else {
+              alert(`❌ "${f.type}" não é um combustível válido! Use apenas folhas ou madeira.`);
+              // Remove o item inválido e evita o travamento
+              P.slots.fuel = null;
+              return;  // Sai da função para evitar mais processamento
+            }
+
+            P.timers.fuelRemaining = durSec * FPS;  // em frames
+            f.count--;
+            if (f.count === 0) P.slots.fuel = null;
+          }
+
+          // 2) Crafting (30 s → craftTicks)
+          if (P.timers.fuelRemaining > 0 && P.slots.craftIn) {
+            P.timers.craftTimer++;
+            if (P.timers.craftTimer >= craftTicks) {
+              const inItem = P.slots.craftIn;
+              if (inItem.type === 'leaf' && inItem.count >= 3) {
+                inItem.count -= 3;
+                giveToMachineOutput(P, 'rope', 1);
+              } else if (inItem.type === 'fiber' && inItem.count >= 1) {
+                inItem.count -= 1;
+                giveToMachineOutput(P, 'rope', 2);
+              }
+              if (inItem.count === 0) P.slots.craftIn = null;
+              // Reseta o timer para o próximo ciclo de 30 s
+              P.timers.craftTimer = 0;
+            }
+          }
+        });
+
       }
+
+
+      // 7) Detecção do baú próximo
+      let nearestChest = null, nearestDist = Infinity;
+      for (let o of objects) {
+        if (o.type === 'chest') {
+          let d = Math.hypot(player.x - o.x, player.y - o.y);
+          if (d < nearestDist) {
+            nearestDist = d;
+            nearestChest = o;
+          }
+        }
+      }
+      if (nearestChest && nearestDist <= 100) {
+        nearbyChest = nearestChest;
+        btnOpenChest.style.display = 'block';
+      } else {
+        nearbyChest = null;
+        btnOpenChest.style.display = 'none';
+      }
+
+
+
+      ctx.restore();  // volta ao sistema de coordenadas da tela
+
+      // 8) Desenha indicador dia/noite no topo
+      // 8) Desenha indicador dia/noite no topo, centralizado
+      ctx.save();
+
+      ctx.beginPath();
+      const circleX = W / 2;  // centro horizontal
+      const circleY = 50;     // 50px do topo
+      const r = 20;
+      ctx.arc(circleX, circleY, r, 0, 2 * Math.PI);
+      ctx.fillStyle = isDay ? 'yellow' : 'darkblue';
+      ctx.fill();
+      ctx.restore();
+
+      if (plantPanel.style.display === 'block') {
+        // 1) Re-renderiza os slots (mostra inventário da máquina em tempo real)
+        renderPlantSlots();
+
+        // 2) Atualiza a barra de progresso
+        if (activePlant
+          && activePlant.timers.fuelRemaining > 0
+          && activePlant.slots.craftIn
+        ) {
+          // supondo 30 ticks por produção:
+          const totalTicks = craftTicks; // já definido como 30 * FPS no escopo global
+          const current = activePlant.timers.craftTimer;
+          const percent = Math.min(100, (current / totalTicks) * 100);
+          progFill.style.width = percent + '%';
+          progContainer.style.display = 'block';
+        } else {
+          progContainer.style.display = 'none';
+        }
+      }
+
+      // 9) Movimento do jogador e próximo frame
+      updateMovement();
+      requestAnimationFrame(draw);
     }
-  }
-  if (nearestChest && nearestDist <= 100) {
-    nearbyChest = nearestChest;
-    btnOpenChest.style.display = 'block';
-  } else {
-    nearbyChest = null;
-    btnOpenChest.style.display = 'none';
-  }
 
-  
+    draw();
 
-  ctx.restore();  // volta ao sistema de coordenadas da tela
+    // --- Consumir Itens ---
+    function consume() {
+      let it = player.inventory[player.selected];
+      if (!it) return;
 
-  // 8) Desenha indicador dia/noite no topo
-// 8) Desenha indicador dia/noite no topo, centralizado
-ctx.save();
-
-ctx.beginPath();
-const circleX = W / 2;  // centro horizontal
-const circleY = 50;     // 50px do topo
-const r       = 20;
-ctx.arc(circleX, circleY, r, 0, 2 * Math.PI);
-ctx.fillStyle = isDay ? 'yellow' : 'darkblue';
-ctx.fill();
-ctx.restore();
-
-  if (plantPanel.style.display === 'block') {
-    // 1) Re-renderiza os slots (mostra inventário da máquina em tempo real)
-    renderPlantSlots();
-
-    // 2) Atualiza a barra de progresso
-    if (activePlant
-      && activePlant.timers.fuelRemaining > 0
-      && activePlant.slots.craftIn
-    ) {
-      // supondo 30 ticks por produção:
-      const totalTicks = craftTicks; // já definido como 30 * FPS no escopo global
-      const current    = activePlant.timers.craftTimer;
-      const percent    = Math.min(100, (current / totalTicks) * 100);
-      progFill.style.width      = percent + '%';
-      progContainer.style.display = 'block';
-    } else {
-      progContainer.style.display = 'none';
+      // 1) Se for poção e estiver em cooldown, avisa e sai
+      if (it.type === 'potion' && potionCooldown) {
+        const msg = document.createElement('div');
+        msg.innerText = 'Ainda em cooldown! A poção não fará efeito.';
+        Object.assign(msg.style, {
+          position: 'absolute',
+          right: '20px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          color: 'cyan',
+          padding: '6px 12px',
+          background: 'rgba(0,0,0,0.7)',
+          borderRadius: '4px',
+          zIndex: 1000
+        });
+        document.body.appendChild(msg);
+        setTimeout(() => document.body.removeChild(msg), 2000);
+        return;
+      }
+      if (it.type === 'fruit') {
+        player.thirst = Math.min(100, player.thirst + 3);
+        player.hunger = Math.min(100, player.hunger + 8);
+        it.count--;
+      } else if (it.type === 'coconut') {
+        player.thirst = Math.min(100, player.thirst + 20);
+        player.hunger = Math.min(100, player.hunger + 10);
+        it.count--;
+      }
+      else if (it.type === 'potion') {
+        // 1) Recupera fome e sede
+        player.hunger = 100;
+        player.thirst = 100;
+        // 2) Insere buff
+        applyPotionBuff();
+        // 3) Consome a poção
+        it.count--;
+      }
+      else if (it.type === 'zoomPotion') {
+        // aplica o efeito de zoom
+        player.thirst = Math.min(100, player.thirst + 40);
+        consumeZoomPotion();      // você deve ter implementado essa função
+        it.count--;
+      }
+      else return; // não comestível
+      if (it.count <= 0) player.inventory.splice(player.selected, 1);
+      updateBars(); updateHUD();
     }
-  }
 
-  // 9) Movimento do jogador e próximo frame
-  updateMovement();
-  requestAnimationFrame(draw);
-}
+    // --- Fim de Jogo ---
+    function endGame() { alert('Você morreu!'); location.reload(); }
 
-draw();
-
-// --- Consumir Itens ---
-function consume(){
-  let it = player.inventory[player.selected];
-  if(!it) return;
-
-    // 1) Se for poção e estiver em cooldown, avisa e sai
-    if (it.type === 'potion' && potionCooldown) {
-    const msg = document.createElement('div');
-    msg.innerText = 'Ainda em cooldown! A poção não fará efeito.';
-    Object.assign(msg.style, {
-      position:    'absolute',
-      right:       '20px',
-      top:         '50%',
-      transform:   'translateY(-50%)',
-      color:       'cyan',
-      padding:     '6px 12px',
-      background:  'rgba(0,0,0,0.7)',
-      borderRadius:'4px',
-      zIndex:      1000
-    });
-    document.body.appendChild(msg);
-    setTimeout(() => document.body.removeChild(msg), 2000);
-    return;
-  }
-  if(it.type==='fruit'){
-    player.thirst = Math.min(100, player.thirst+3);
-    player.hunger = Math.min(100, player.hunger+8);
-    it.count--;
-  } else if(it.type==='coconut'){
-    player.thirst = Math.min(100, player.thirst+20);
-    player.hunger = Math.min(100, player.hunger+10);
-    it.count--;
-  }
-  else if (it.type === 'potion') {
-  // 1) Recupera fome e sede
-  player.hunger = 100;
-  player.thirst = 100;
-  // 2) Insere buff
-  applyPotionBuff();
-  // 3) Consome a poção
-  it.count--;
-  }
-    else if (it.type === 'zoomPotion') {
-    // aplica o efeito de zoom
-    player.thirst = Math.min(100, player.thirst + 40);
-    consumeZoomPotion();      // você deve ter implementado essa função
-    it.count--;
-  }
-   else return; // não comestível
-  if(it.count<=0) player.inventory.splice(player.selected,1);
-  updateBars(); updateHUD();
-}
-
-// --- Fim de Jogo ---
-function endGame(){ alert('Você morreu!'); location.reload(); }
-
-</script>
+  </script>
 </body>
+
 </html>
