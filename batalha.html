@@ -2426,8 +2426,10 @@ Boa sorte na batalha!`);
                             damage: def.damage,
                             range: def.range,
                             speed: def.speed,
+                            attackSpeed: def.attackSpeed,
                             lastAttack: ts,
                             _angle: 0
+                            id: nextTroopId++
                         };
                         // se for slot inimigo (índices 3,4,5), é inimigo; senão, aliado
                         if (i >= 3) enemies.push(nova);
@@ -3449,5 +3451,6 @@ Boa sorte na batalha!`);
         renderShop();
     </script>
 </body>
+
 
 </html>
